@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { execFileSync } from "child_process";
+import { escapeMarkdownTableCell } from "./markdown-table";
 
 type AuditCheck = {
   category: string;
@@ -257,7 +258,10 @@ function generateMarkdown(checks: AuditCheck[]): string {
   ];
 
   for (const check of checks) {
-    lines.push(`| ${check.category} | ${check.check} | ${check.passed ? "PASS" : "FAIL"} | ${check.details.replace(/\|/g, "\\|")} |`);
+    const category = escapeMarkdownTableCell(check.category);
+    const checkName = escapeMarkdownTableCell(check.check);
+    const details = escapeMarkdownTableCell(check.details);
+    lines.push(`| ${category} | ${checkName} | ${check.passed ? "PASS" : "FAIL"} | ${details} |`);
   }
 
   lines.push(

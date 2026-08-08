@@ -97,7 +97,7 @@ scripts/
 
 docs/
   Methodology, architecture, assumptions, glossary, handoff material,
-  implementation notes, interview material and project summaries.
+  implementation notes, technical reference material and project summaries.
 
 tests/
   Automated tests and validation notes.
@@ -139,7 +139,9 @@ The repository includes:
 - read-only workflow permissions by default;
 - deterministic `pnpm` activation and frozen-lockfile installation;
 - CI validation for type safety, tests, repository structure, fit-gap analysis, local secret scanning and release readiness;
-- an eligibility-aware CodeQL workflow that records the current private-repository limitation instead of producing a structurally failing pipeline.
+- active CodeQL analysis for JavaScript and TypeScript on the public repository;
+- GitHub Secret Scanning and push protection;
+- an active `Protect main` ruleset requiring the repository validation and CodeQL checks before merge.
 
 ## Running the Project
 
@@ -236,13 +238,15 @@ For an AI-enabled B2B SaaS environment, the project can be used to:
 
 ## Current Analysis Snapshot
 
-The current portfolio summary reports:
+The current generated fit-gap report records:
 
 - 14 controls assessed;
-- 4 partially covered controls;
+- 1 compliant control;
+- 3 partially covered controls;
 - 10 gaps;
 - 7 high-risk findings;
-- 7 medium-risk findings.
+- 6 medium-risk findings;
+- 1 low-risk finding.
 
 These results reflect the evidence set contained in this repository and should not be interpreted as a real-world certification or audit conclusion.
 

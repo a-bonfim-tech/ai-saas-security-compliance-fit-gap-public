@@ -1,0 +1,61 @@
+{
+  "repository": "OWNER/REPOSITORY",
+  "collectedAt": "YYYY-MM-DDTHH:MM:SSZ",
+  "collector": "manual-github-evidence-template",
+  "evidence": [
+    {
+      "key": "branch_protection_enabled",
+      "present": false,
+      "source": "github/repository/settings/branches",
+      "notes": "Review default branch protection settings."
+    },
+    {
+      "key": "pull_request_reviews_required",
+      "present": false,
+      "source": "github/repository/settings/branches",
+      "notes": "Review whether pull request reviews are required before merge."
+    },
+    {
+      "key": "codeowners_configured",
+      "present": false,
+      "source": ".github/CODEOWNERS or CODEOWNERS",
+      "notes": "Check whether CODEOWNERS exists and maps critical paths to responsible reviewers."
+    },
+    {
+      "key": "dependabot_enabled",
+      "present": false,
+      "source": ".github/dependabot.yml",
+      "notes": "Check whether Dependabot updates are configured."
+    },
+    {
+      "key": "codeql_enabled",
+      "present": false,
+      "source": ".github/workflows/codeql.yml",
+      "notes": "Check whether CodeQL workflow exists and runs on pull requests or main branch."
+    },
+    {
+      "key": "dependency_review_enabled",
+      "present": false,
+      "source": ".github/workflows/dependency-review.yml",
+      "notes": "Check whether dependency review is configured for pull requests."
+    },
+    {
+      "key": "security_policy_exists",
+      "present": false,
+      "source": "SECURITY.md",
+      "notes": "Check whether the repository includes a security policy."
+    },
+    {
+      "key": "secret_scanning_enabled",
+      "present": false,
+      "source": "github/repository/security/settings",
+      "notes": "Review whether secret scanning is enabled."
+    },
+    {
+      "key": "push_protection_enabled",
+      "present": false,
+      "source": "github/repository/security/settings",
+      "notes": "Review whether push protection is enabled."
+    }
+  ]
+}

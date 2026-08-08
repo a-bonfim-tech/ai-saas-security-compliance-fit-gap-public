@@ -1,0 +1,42 @@
+{
+  "area": "AI Governance",
+  "collectedAt": "YYYY-MM-DDTHH:MM:SSZ",
+  "evidence": [
+    {
+      "key": "ai_system_description_exists",
+      "present": false,
+      "source": "docs/ai-system-documentation-template.md",
+      "notes": "Document the AI system purpose, users, provider, model type and deployment context."
+    },
+    {
+      "key": "ai_data_flow_documented",
+      "present": false,
+      "source": "docs/ai-system-documentation-template.md",
+      "notes": "Document how data flows through prompts, model calls, outputs, logs and storage."
+    },
+    {
+      "key": "human_oversight_defined",
+      "present": false,
+      "source": "docs/ai-system-documentation-template.md",
+      "notes": "Document how humans review, override or monitor AI outputs."
+    },
+    {
+      "key": "prompt_injection_risk_assessed",
+      "present": false,
+      "source": "docs/ai-risk-assessment-template.md",
+      "notes": "Assess prompt injection risks and mitigation options."
+    },
+    {
+      "key": "ai_vendor_review_documented",
+      "present": false,
+      "source": "docs/ai-vendor-review.md",
+      "notes": "Review model provider, data handling terms and processing boundaries."
+    },
+    {
+      "key": "ai_transparency_notice_reviewed",
+      "present": false,
+      "source": "docs/ai-transparency-review.md",
+      "notes": "Review whether users should be informed about AI use."
+    }
+  ]
+}

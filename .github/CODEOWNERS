@@ -1,0 +1,14 @@
+# Default ownership for all repository content.
+* @a-bonfim-tech
+
+# Security-sensitive and governance-sensitive areas.
+/.github/ @a-bonfim-tech
+/SECURITY.md @a-bonfim-tech
+/package.json @a-bonfim-tech
+/pnpm-lock.yaml @a-bonfim-tech
+/frameworks/ @a-bonfim-tech
+/controls/ @a-bonfim-tech
+/evidence/ @a-bonfim-tech
+/mappings/ @a-bonfim-tech
+/schemas/ @a-bonfim-tech
+/scripts/ @a-bonfim-tech

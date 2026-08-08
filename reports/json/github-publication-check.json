@@ -1,0 +1,35 @@
+{
+  "generatedAt": "2026-08-08T15:29:04.161Z",
+  "checks": [
+    {
+      "check": "Git working tree",
+      "passed": true,
+      "details": "Working tree has no meaningful uncommitted changes. Publication-check report files are ignored for this check because the command regenerates them."
+    },
+    {
+      "check": "Git remote",
+      "passed": true,
+      "details": "Origin remote configured: https://github.com/a-bonfim-tech/ai-saas-security-compliance-fit-gap-public.git"
+    },
+    {
+      "check": "Forbidden .env files",
+      "passed": true,
+      "details": "No forbidden .env files found."
+    },
+    {
+      "check": "Publication documentation",
+      "passed": true,
+      "details": "Publication documentation exists."
+    },
+    {
+      "check": "Publication reports",
+      "passed": true,
+      "details": "Publication reports exist."
+    },
+    {
+      "check": "GitHub repository metadata access",
+      "passed": true,
+      "details": "GitHub repository metadata is accessible."
+    }
+  ]
+}

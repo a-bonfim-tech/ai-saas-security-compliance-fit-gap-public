@@ -1,0 +1,52 @@
+name: Evidence Refresh
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  evidence-refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "22"
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Activate pinned pnpm
+        run: corepack prepare pnpm@11.2.2 --activate
+
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Collect local evidence
+        run: pnpm collect:github-local
+
+      - name: Run typecheck
+        run: pnpm typecheck
+
+      - name: Run fit-gap analysis
+        run: pnpm analyze
+
+      - name: Validate generated report files
+        run: |
+          test -f evidence/github/github-local-evidence.json
+          test -f reports/fit-gap-analysis.md
+          test -f reports/json/fit-gap-analysis.json
+          test -f reports/csv/fit-gap-analysis.csv
+          node -e "JSON.parse(require('fs').readFileSync('reports/json/fit-gap-analysis.json', 'utf8'))"

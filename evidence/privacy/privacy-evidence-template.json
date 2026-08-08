@@ -1,0 +1,42 @@
+{
+  "area": "Privacy and Data Protection",
+  "collectedAt": "YYYY-MM-DDTHH:MM:SSZ",
+  "evidence": [
+    {
+      "key": "data_inventory_exists",
+      "present": false,
+      "source": "docs/data-inventory.md",
+      "notes": "Document categories of personal and business data processed by the product."
+    },
+    {
+      "key": "privacy_notice_exists",
+      "present": false,
+      "source": "docs/privacy-notice-review.md",
+      "notes": "Identify or review the privacy notice applicable to the product."
+    },
+    {
+      "key": "data_retention_defined",
+      "present": false,
+      "source": "docs/data-retention.md",
+      "notes": "Document retention periods and deletion logic."
+    },
+    {
+      "key": "controller_processor_roles_reviewed",
+      "present": false,
+      "source": "docs/privacy-roles.md",
+      "notes": "Review controller, processor and subprocessor roles."
+    },
+    {
+      "key": "dpa_reviewed",
+      "present": false,
+      "source": "docs/dpa-review.md",
+      "notes": "Review whether a data processing agreement is required or available."
+    },
+    {
+      "key": "data_subject_rights_process_documented",
+      "present": false,
+      "source": "docs/data-subject-rights.md",
+      "notes": "Document how data subject requests are handled."
+    }
+  ]
+}

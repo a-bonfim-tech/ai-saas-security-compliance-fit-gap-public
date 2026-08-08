@@ -1,0 +1,52 @@
+{
+  "maintenanceItems": [
+    {
+      "area": "Quality",
+      "task": "Run full quality check",
+      "cadence": "Before every major commit",
+      "commandOrLocation": "pnpm quality:check"
+    },
+    {
+      "area": "Release",
+      "task": "Run release preparation",
+      "cadence": "Before tagging a release",
+      "commandOrLocation": "pnpm release:prepare"
+    },
+    {
+      "area": "Security",
+      "task": "Run local secret scan",
+      "cadence": "Before pushing and before publication",
+      "commandOrLocation": "pnpm security:scan-local"
+    },
+    {
+      "area": "Evidence",
+      "task": "Refresh evidence and reports",
+      "cadence": "Whenever controls or evidence change",
+      "commandOrLocation": "pnpm evidence:refresh-complete"
+    },
+    {
+      "area": "Reports",
+      "task": "Regenerate all reports",
+      "cadence": "Whenever evidence changes",
+      "commandOrLocation": "pnpm reports:all"
+    },
+    {
+      "area": "Handoff",
+      "task": "Regenerate security assessment handoff package",
+      "cadence": "Before technical portfolio reviews or presentations",
+      "commandOrLocation": "pnpm handoff:generate"
+    },
+    {
+      "area": "Audit",
+      "task": "Run final audit",
+      "cadence": "Before public release or portfolio review",
+      "commandOrLocation": "pnpm audit:final"
+    },
+    {
+      "area": "GitHub",
+      "task": "Review GitHub repository settings",
+      "cadence": "Monthly or before publication",
+      "commandOrLocation": "docs/final/github-final-actions.md"
+    }
+  ]
+}

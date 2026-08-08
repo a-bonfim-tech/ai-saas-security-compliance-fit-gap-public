@@ -1,0 +1,42 @@
+{
+  "area": "Cloud Security",
+  "collectedAt": "YYYY-MM-DDTHH:MM:SSZ",
+  "evidence": [
+    {
+      "key": "cloud_provider_documented",
+      "present": false,
+      "source": "docs/cloud-architecture.md",
+      "notes": "Document whether the product uses AWS, Azure, GCP, Vercel, Supabase or another provider."
+    },
+    {
+      "key": "cloud_iam_review_documented",
+      "present": false,
+      "source": "docs/cloud-security-review.md",
+      "notes": "Document IAM users, roles, service accounts and privileged access."
+    },
+    {
+      "key": "cloud_audit_logs_enabled",
+      "present": false,
+      "source": "cloud-provider/audit-logs",
+      "notes": "Confirm whether cloud audit logging is enabled."
+    },
+    {
+      "key": "encryption_at_rest_reviewed",
+      "present": false,
+      "source": "docs/cloud-security-review.md",
+      "notes": "Review encryption at rest for databases, storage and backups."
+    },
+    {
+      "key": "encryption_in_transit_reviewed",
+      "present": false,
+      "source": "docs/cloud-security-review.md",
+      "notes": "Review TLS and encryption in transit for application and database connections."
+    },
+    {
+      "key": "backup_recovery_documented",
+      "present": false,
+      "source": "docs/backup-recovery.md",
+      "notes": "Document backup frequency, restore process and recovery objectives."
+    }
+  ]
+}

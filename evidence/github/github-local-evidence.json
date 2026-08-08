@@ -1,0 +1,73 @@
+{
+  "repositoryPath": ".",
+  "collectedAt": "2026-08-08T15:28:29.380Z",
+  "collector": "github-local-evidence-collector",
+  "evidence": [
+    {
+      "key": "security_policy_exists",
+      "present": true,
+      "source": "SECURITY.md",
+      "notes": "SECURITY.md exists in the repository."
+    },
+    {
+      "key": "dependabot_enabled",
+      "present": true,
+      "source": ".github/dependabot.yml",
+      "notes": "Dependabot configuration exists."
+    },
+    {
+      "key": "codeql_enabled",
+      "present": true,
+      "source": ".github/workflows",
+      "notes": "CodeQL workflow is configured."
+    },
+    {
+      "key": "dependency_review_enabled",
+      "present": false,
+      "source": ".github/workflows",
+      "notes": "Dependency review workflow was not found."
+    },
+    {
+      "key": "codeowners_configured",
+      "present": true,
+      "source": "CODEOWNERS or .github/CODEOWNERS",
+      "notes": "CODEOWNERS file exists."
+    },
+    {
+      "key": "ci_workflow_enabled",
+      "present": true,
+      "source": ".github/workflows/ci.yml",
+      "notes": "CI workflow exists."
+    },
+    {
+      "key": "report_validation_workflow_enabled",
+      "present": true,
+      "source": ".github/workflows/validate-reports.yml",
+      "notes": "Report validation workflow exists."
+    },
+    {
+      "key": "env_files_ignored",
+      "present": true,
+      "source": ".gitignore",
+      "notes": ".env files are ignored."
+    },
+    {
+      "key": "package_lock_committed",
+      "present": true,
+      "source": "pnpm-lock.yaml, package-lock.json or yarn.lock",
+      "notes": "Package manager lockfile exists."
+    },
+    {
+      "key": "typescript_typecheck_defined",
+      "present": true,
+      "source": "package.json",
+      "notes": "Typecheck script is defined."
+    },
+    {
+      "key": "fit_gap_analysis_script_defined",
+      "present": true,
+      "source": "package.json and scripts/analyze-fit-gap.ts",
+      "notes": "Fit-gap analysis script exists and is exposed through package.json."
+    }
+  ]
+}

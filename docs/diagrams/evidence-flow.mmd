@@ -1,0 +1,17 @@
+flowchart LR
+    A[controls/control-catalog.json] --> C[Analysis Engine]
+    B[evidence/evidence-register.json] --> C
+
+    D[evidence/application] --> B
+    E[evidence/cloud] --> B
+    F[evidence/privacy] --> B
+    G[evidence/ai-governance] --> B
+    H[evidence/github] --> B
+
+    C --> I[reports/fit-gap-analysis.md]
+    C --> J[reports/json/fit-gap-analysis.json]
+    C --> K[reports/csv/fit-gap-analysis.csv]
+
+    J --> L[reports/roadmap/remediation-roadmap.md]
+    J --> M[reports/executive/executive-readiness-report.md]
+    J --> N[reports/risk-score-report.md]

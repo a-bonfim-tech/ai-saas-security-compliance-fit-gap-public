@@ -1,0 +1,64 @@
+{
+  "name": "ai-saas-security-compliance-fit-gap",
+  "version": "1.0.0",
+  "description": "TypeScript-based security, compliance and AI governance fit-gap analysis project for AI-enabled B2B SaaS environments.",
+  "main": "index.js",
+  "scripts": {
+    "analyze": "tsx scripts/analyze-fit-gap.ts",
+    "typecheck": "tsc --noEmit",
+    "collect:github-local": "tsx scripts/collect-github-local-evidence.ts",
+    "evidence:merge-local": "tsx scripts/merge-local-evidence.ts",
+    "evidence:refresh": "pnpm collect:github-local && pnpm evidence:merge-local && pnpm analyze",
+    "collect:github-remote": "tsx scripts/collect-github-remote-evidence.ts",
+    "evidence:merge-remote": "tsx scripts/merge-remote-evidence.ts",
+    "evidence:refresh-remote": "pnpm collect:github-local && pnpm evidence:merge-local && pnpm collect:github-remote && pnpm evidence:merge-remote && pnpm analyze",
+    "evidence:ingest-domain": "tsx scripts/ingest-domain-evidence.ts",
+    "summary:portfolio": "tsx scripts/generate-project-summary.ts",
+    "evidence:refresh-all": "pnpm collect:github-local && pnpm evidence:merge-local && pnpm evidence:ingest-domain && pnpm analyze && pnpm summary:portfolio",
+    "roadmap:generate": "tsx scripts/generate-remediation-roadmap.ts",
+    "report:executive": "tsx scripts/generate-executive-report.ts",
+    "report:risk-score": "tsx scripts/generate-risk-score-report.ts",
+    "reports:all": "pnpm analyze && pnpm roadmap:generate && pnpm report:executive && pnpm report:risk-score && pnpm summary:portfolio",
+    "evidence:refresh-complete": "pnpm collect:github-local && pnpm evidence:merge-local && pnpm evidence:ingest-domain && pnpm reports:all",
+    "test": "vitest run",
+    "validate:repo": "tsx scripts/validate-repository.ts",
+    "quality:check": "pnpm typecheck && pnpm test && pnpm evidence:refresh-complete && pnpm validate:repo",
+    "release:check": "tsx scripts/final-release-check.ts",
+    "release:prepare": "pnpm quality:check && pnpm release:check",
+    "security:scan-local": "tsx scripts/local-secret-scan.ts",
+    "handoff:generate": "tsx scripts/generate-assessment-handoff.ts",
+    "final:check": "pnpm release:prepare && pnpm security:scan-local && pnpm handoff:generate",
+    "audit:final": "tsx scripts/final-project-audit.ts",
+    "complete:verify": "pnpm final:check && pnpm audit:final",
+    "maintenance:report": "tsx scripts/generate-maintenance-report.ts",
+    "github:publication-check": "tsx scripts/github-publication-check.ts",
+    "portfolio:final": "pnpm complete:verify && pnpm maintenance:report",
+    "portfolio:publication-check": "pnpm github:publication-check",
+    "portfolio:final-clean": "pnpm portfolio:final && git status --short",
+    "github:actions-status": "tsx scripts/capture-github-actions-status.ts",
+    "phase20:verify": "pnpm typecheck && pnpm test && pnpm validate:repo && pnpm release:check && pnpm security:scan-local && pnpm audit:final && pnpm maintenance:report && pnpm github:actions-status"
+  },
+  "keywords": [
+    "cybersecurity",
+    "compliance",
+    "ai-governance",
+    "risk-assessment",
+    "b2b-saas"
+  ],
+  "author": "a-bonfim-tech",
+  "license": "ISC",
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "11.2.2",
+      "onFail": "download"
+    }
+  },
+  "type": "module",
+  "devDependencies": {
+    "@types/node": "^25.9.1",
+    "tsx": "^4.22.3",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.7"
+  }
+}

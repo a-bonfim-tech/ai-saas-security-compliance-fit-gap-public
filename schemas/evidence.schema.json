@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/evidence.schema.json",
+  "title": "Evidence Register",
+  "description": "Schema for evidence items used by the fit-gap analysis engine.",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": ["key", "present", "source", "notes"],
+    "properties": {
+      "key": {
+        "type": "string",
+        "description": "Unique evidence key matched against expected evidence in the control catalog."
+      },
+      "present": {
+        "type": "boolean",
+        "description": "Whether the evidence is currently present."
+      },
+      "source": {
+        "type": ["string", "null"],
+        "description": "Evidence source, such as GitHub settings, file path, cloud configuration, policy document or log source."
+      },
+      "notes": {
+        "type": "string",
+        "description": "Human-readable explanation of the evidence state."
+      }
+    },
+    "additionalProperties": false
+  }
+}

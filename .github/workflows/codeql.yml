@@ -1,0 +1,59 @@
+name: CodeQL
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "30 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: codeql-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  availability:
+    name: CodeQL eligibility gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Record CodeQL availability
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.event.repository.private }}" == "true" ]]; then
+            echo "CodeQL code-scanning upload is deferred while this personal-account repository is private."
+            echo "The analysis job will activate automatically if the repository becomes public or private-repository Code Security becomes available."
+          else
+            echo "Repository visibility permits CodeQL code-scanning analysis."
+          fi
+
+  analyze:
+    name: Analyze TypeScript (javascript-typescript)
+    if: ${{ github.event.repository.private == false }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      security-events: write
+      packages: read
+      actions: read
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          persist-credentials: false
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@7211b7c8077ea37d8641b6271f6a365a22a5fbfa # v4.36.0
+        with:
+          languages: javascript-typescript
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@7211b7c8077ea37d8641b6271f6a365a22a5fbfa # v4.36.0

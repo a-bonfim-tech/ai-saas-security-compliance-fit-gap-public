@@ -1,0 +1,24 @@
+flowchart TD
+    A[Security and Compliance Frameworks] --> B[Normalized Control Catalog]
+    B --> C[Expected Evidence Keys]
+
+    D[Local GitHub Evidence Collector] --> H[Evidence Register]
+    E[Remote GitHub Evidence Collector] --> H
+    F[Domain Evidence Templates] --> H
+    G[Manual Evidence Review] --> H
+
+    C --> I[Fit-Gap Analysis Engine]
+    H --> I
+
+    I --> J[Markdown Fit-Gap Report]
+    I --> K[JSON Fit-Gap Report]
+    I --> L[CSV Fit-Gap Report]
+
+    K --> M[Risk Score Report]
+    K --> N[Remediation Roadmap]
+    K --> O[Executive Readiness Report]
+    K --> P[Portfolio Project Summary]
+
+    Q[Automated Tests] --> R[Quality Check]
+    S[Repository Validation] --> R
+    I --> R

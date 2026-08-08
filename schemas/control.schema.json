@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/control.schema.json",
+  "title": "Control Catalog",
+  "description": "Schema for normalized security and compliance controls.",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": ["id", "domain", "title", "frameworks", "expectedEvidence"],
+    "properties": {
+      "id": {
+        "type": "string",
+        "description": "Unique control identifier."
+      },
+      "domain": {
+        "type": "string",
+        "description": "Control domain such as Governance, IAM, Secure SDLC, Privacy or AI Governance."
+      },
+      "title": {
+        "type": "string",
+        "description": "Short control title."
+      },
+      "frameworks": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "Frameworks associated with the control."
+      },
+      "expectedEvidence": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "Evidence keys required or expected for the control."
+      }
+    },
+    "additionalProperties": false
+  }
+}

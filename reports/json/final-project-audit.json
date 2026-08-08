@@ -1,0 +1,59 @@
+{
+  "generatedAt": "2026-08-08T15:28:34.167Z",
+  "checks": [
+    {
+      "category": "Core",
+      "check": "Required core files",
+      "passed": true,
+      "details": "All required core files exist."
+    },
+    {
+      "category": "Reports",
+      "check": "Generated reports",
+      "passed": true,
+      "details": "All expected reports exist."
+    },
+    {
+      "category": "Documentation",
+      "check": "Documentation coverage",
+      "passed": true,
+      "details": "Documentation files found: 69."
+    },
+    {
+      "category": "Frameworks",
+      "check": "Framework notes",
+      "passed": true,
+      "details": "All framework notes exist."
+    },
+    {
+      "category": "Controls",
+      "check": "Control catalog coverage",
+      "passed": true,
+      "details": "Controls: 14. Domains: 9. Frameworks: 7."
+    },
+    {
+      "category": "Evidence",
+      "check": "Evidence register",
+      "passed": true,
+      "details": "Evidence items: 51. Present: 16. Missing/false: 35."
+    },
+    {
+      "category": "Automation",
+      "check": "Package scripts",
+      "passed": true,
+      "details": "All required scripts exist."
+    },
+    {
+      "category": "GitHub",
+      "check": "Public-edition origin remote",
+      "passed": true,
+      "details": "Origin remote: https://github.com/a-bonfim-tech/ai-saas-security-compliance-fit-gap-public.git"
+    },
+    {
+      "category": "Publication Safety",
+      "check": "Private provenance markers",
+      "passed": true,
+      "details": "No private provenance markers found."
+    }
+  ]
+}

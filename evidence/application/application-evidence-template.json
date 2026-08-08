@@ -1,0 +1,42 @@
+{
+  "area": "Application Security",
+  "collectedAt": "YYYY-MM-DDTHH:MM:SSZ",
+  "evidence": [
+    {
+      "key": "authentication_mechanism_documented",
+      "present": false,
+      "source": "docs/application-architecture.md",
+      "notes": "Document the authentication mechanism used by the application."
+    },
+    {
+      "key": "authorization_checks_documented",
+      "present": false,
+      "source": "docs/application-architecture.md",
+      "notes": "Document server-side authorization checks for protected routes and APIs."
+    },
+    {
+      "key": "input_validation_documented",
+      "present": false,
+      "source": "docs/application-security-review.md",
+      "notes": "Document input validation strategy for user-controlled data."
+    },
+    {
+      "key": "secure_error_handling_documented",
+      "present": false,
+      "source": "docs/application-security-review.md",
+      "notes": "Document how errors avoid exposing sensitive implementation details."
+    },
+    {
+      "key": "secrets_management_documented",
+      "present": false,
+      "source": "docs/secrets-management.md",
+      "notes": "Document how secrets are stored, rotated and excluded from source control."
+    },
+    {
+      "key": "rate_limiting_reviewed",
+      "present": false,
+      "source": "docs/application-security-review.md",
+      "notes": "Review rate limiting or abuse prevention for exposed endpoints."
+    }
+  ]
+}

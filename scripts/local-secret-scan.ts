@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import { escapeMarkdownTableCell } from "./markdown-table";
 
 type Finding = {
   file: string;
@@ -114,8 +115,10 @@ function generateMarkdown(findings: Finding[]): string {
   lines.push("|---|---:|---|---|");
 
   for (const finding of findings) {
-    const excerpt = finding.excerpt.replace(/\|/g, "\\|");
-    lines.push(`| ${finding.file} | ${finding.line} | ${finding.pattern} | \`${excerpt}\` |`);
+    const file = escapeMarkdownTableCell(finding.file);
+    const pattern = escapeMarkdownTableCell(finding.pattern);
+    const excerpt = escapeMarkdownTableCell(finding.excerpt);
+    lines.push(`| ${file} | ${finding.line} | ${pattern} | ${excerpt} |`);
   }
 
   lines.push("");

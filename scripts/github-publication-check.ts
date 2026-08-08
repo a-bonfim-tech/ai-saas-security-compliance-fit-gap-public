@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { execFileSync } from "child_process";
+import { escapeMarkdownTableCell } from "./markdown-table";
 
 type PublicationCheck = {
   check: string;
@@ -140,7 +141,9 @@ function main(): void {
   lines.push("|---|---|---|");
 
   for (const check of checks) {
-    lines.push(`| ${check.check} | ${check.passed ? "PASS" : "FAIL"} | ${check.details.replace(/\|/g, "\\|")} |`);
+    const checkName = escapeMarkdownTableCell(check.check);
+    const details = escapeMarkdownTableCell(check.details);
+    lines.push(`| ${checkName} | ${check.passed ? "PASS" : "FAIL"} | ${details} |`);
   }
 
   lines.push("");

@@ -2,7 +2,7 @@
 
 ## Reporting a Vulnerability
 
-This repository is a cybersecurity learning and portfolio project.
+This repository is a cybersecurity engineering and portfolio project.
 
 If you identify a security issue in the repository, please do not open a public issue containing sensitive details.
 

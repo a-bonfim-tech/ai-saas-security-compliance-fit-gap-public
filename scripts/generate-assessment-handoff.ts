@@ -3,9 +3,9 @@ import path from "path";
 
 type ReportSummary = {
   totalControls: number;
-  compliant: number;
-  partial: number;
-  gaps: number;
+  evidenceSufficient: number;
+  evidencePartial: number;
+  evidenceGaps: number;
   highRiskFindings: number;
   mediumRiskFindings: number;
   lowRiskFindings: number;
@@ -62,9 +62,9 @@ function main(): void {
   lines.push("");
   lines.push(`- Generated at: ${report.generatedAt}`);
   lines.push(`- Total controls assessed: ${report.summary.totalControls}`);
-  lines.push(`- Compliant controls: ${report.summary.compliant}`);
-  lines.push(`- Partially covered controls: ${report.summary.partial}`);
-  lines.push(`- Gaps: ${report.summary.gaps}`);
+  lines.push(`- Evidence-sufficient controls: ${report.summary.evidenceSufficient}`);
+  lines.push(`- Evidence-partial controls: ${report.summary.evidencePartial}`);
+  lines.push(`- Evidence gaps: ${report.summary.evidenceGaps}`);
   lines.push(`- High-risk findings: ${report.summary.highRiskFindings}`);
   lines.push(`- Medium-risk findings: ${report.summary.mediumRiskFindings}`);
   lines.push(`- Low-risk findings: ${report.summary.lowRiskFindings}`);
@@ -92,7 +92,7 @@ function main(): void {
   lines.push("");
   lines.push("## 90-Second Explanation");
   lines.push("");
-  lines.push("This repository is a practical lab for security and compliance automation in AI-enabled B2B SaaS. It maps frameworks such as NIST CSF 2.0, ISO 27001, SOC 2, GDPR, the EU AI Act and OWASP to normalized controls. Each control has expected evidence. The evidence register collects proof from GitHub, application security, cloud security, privacy and AI governance sources. A TypeScript engine compares expected evidence against available evidence, classifies each control as compliant, partial or gap, assigns risk and generates reports for technical and executive audiences.");
+  lines.push("This repository is a practical lab for security and compliance automation in AI-enabled B2B SaaS. It maps frameworks such as NIST CSF 2.0, ISO 27001, SOC 2, GDPR, the EU AI Act and OWASP to normalized controls. Each control has expected evidence. The evidence register collects proof from GitHub, application security, cloud security, privacy and AI governance sources. A TypeScript engine compares expected evidence against available evidence, classifies repository evidence for each control as Evidence Sufficient, Evidence Partial or Evidence Gap, assigns risk and generates reports for technical and executive audiences.");
   lines.push("");
   lines.push("## Concise Project Explanation");
   lines.push("");

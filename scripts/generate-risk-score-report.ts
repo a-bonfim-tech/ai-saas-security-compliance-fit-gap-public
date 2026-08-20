@@ -6,7 +6,7 @@ type Finding = {
   domain: string;
   title: string;
   frameworks: string[];
-  status: "Compliant" | "Partial" | "Gap";
+  status: "Evidence Sufficient" | "Evidence Partial" | "Evidence Gap";
   risk: "Low" | "Medium" | "High" | "Critical";
   foundEvidence: string[];
   missingEvidence: string[];
@@ -18,9 +18,9 @@ type Report = {
   methodology: string;
   summary: {
     totalControls: number;
-    compliant: number;
-    partial: number;
-    gaps: number;
+    evidenceSufficient: number;
+    evidencePartial: number;
+    evidenceGaps: number;
     highRiskFindings: number;
     mediumRiskFindings: number;
     lowRiskFindings: number;
@@ -41,9 +41,9 @@ function riskScore(finding: Finding): number {
   }[finding.risk];
 
   const statusModifier = {
-    Gap: 20,
-    Partial: 10,
-    Compliant: 0
+    "Evidence Gap": 20,
+    "Evidence Partial": 10,
+    "Evidence Sufficient": 0
   }[finding.status];
 
   const missingEvidenceModifier = Math.min(finding.missingEvidence.length * 3, 15);
@@ -80,8 +80,8 @@ function main(): void {
   lines.push("- High risk starts at 75.");
   lines.push("- Medium risk starts at 50.");
   lines.push("- Low risk starts at 25.");
-  lines.push("- Gap status adds 20.");
-  lines.push("- Partial status adds 10.");
+  lines.push("- Evidence Gap status adds 20.");
+  lines.push("- Evidence Partial status adds 10.");
   lines.push("- Missing evidence adds up to 15 additional points.");
   lines.push("- Maximum score is capped at 100.");
   lines.push("");

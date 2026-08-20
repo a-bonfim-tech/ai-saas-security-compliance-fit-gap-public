@@ -1,6 +1,6 @@
 # Executive Security & Compliance Readiness Report
 
-Generated at: 2026-08-08T15:28:30.833Z
+Generated at: 2026-08-20T22:23:26.854Z
 
 ## Executive Overview
 
@@ -11,9 +11,9 @@ The analysis maps security, privacy and AI governance requirements to controls, 
 ## Readiness Snapshot
 
 - Total controls assessed: 14
-- Compliant controls: 1 (7%)
-- Partially covered controls: 3 (21%)
-- Open gaps: 10 (71%)
+- Evidence-sufficient controls: 1 (7%)
+- Evidence-partial controls: 3 (21%)
+- Evidence gaps: 10 (71%)
 - High-risk findings: 7
 - Medium-risk findings: 6
 - Low-risk findings: 1

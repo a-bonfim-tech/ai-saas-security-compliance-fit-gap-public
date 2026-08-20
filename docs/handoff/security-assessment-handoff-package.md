@@ -32,11 +32,11 @@ Framework -> Requirement -> Control -> Evidence -> Status -> Gap -> Risk -> Reco
 
 ## Current Fit-Gap Summary
 
-- Generated at: 2026-08-08T15:28:23.103Z
+- Generated at: 2026-08-20T22:23:26.854Z
 - Total controls assessed: 14
-- Compliant controls: 1
-- Partially covered controls: 3
-- Gaps: 10
+- Evidence-sufficient controls: 1
+- Evidence-partial controls: 3
+- Evidence gaps: 10
 - High-risk findings: 7
 - Medium-risk findings: 6
 - Low-risk findings: 1
@@ -64,7 +64,7 @@ Then show:
 
 ## 90-Second Explanation
 
-This repository is a practical lab for security and compliance automation in AI-enabled B2B SaaS. It maps frameworks such as NIST CSF 2.0, ISO 27001, SOC 2, GDPR, the EU AI Act and OWASP to normalized controls. Each control has expected evidence. The evidence register collects proof from GitHub, application security, cloud security, privacy and AI governance sources. A TypeScript engine compares expected evidence against available evidence, classifies each control as compliant, partial or gap, assigns risk and generates reports for technical and executive audiences.
+This repository is a practical lab for security and compliance automation in AI-enabled B2B SaaS. It maps frameworks such as NIST CSF 2.0, ISO 27001, SOC 2, GDPR, the EU AI Act and OWASP to normalized controls. Each control has expected evidence. The evidence register collects proof from GitHub, application security, cloud security, privacy and AI governance sources. A TypeScript engine compares expected evidence against available evidence, classifies repository evidence for each control as Evidence Sufficient, Evidence Partial or Evidence Gap, assigns risk and generates reports for technical and executive audiences.
 
 ## Concise Project Explanation
 

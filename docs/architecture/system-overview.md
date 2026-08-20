@@ -25,7 +25,7 @@ The repository is designed as a lightweight compliance automation system that ma
 2. Evidence is collected from local repository files, GitHub metadata and domain-specific templates.
 3. Evidence is merged into `evidence/evidence-register.json`.
 4. The analysis engine compares expected evidence with available evidence.
-5. Findings are classified as `Compliant`, `Partial` or `Gap`.
+5. Findings are classified as `Evidence Sufficient`, `Evidence Partial` or `Evidence Gap`.
 6. Findings receive risk ratings.
 7. Reports are generated in Markdown, JSON and CSV.
 8. Roadmap and executive reports are generated.

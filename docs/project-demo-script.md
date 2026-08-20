@@ -6,7 +6,7 @@ This script provides a concise explanation for presenting the repository in a te
 
 ## 30-Second Version
 
-This project is an AI SaaS security and compliance fit-gap automation lab. It maps frameworks such as NIST CSF 2.0, ISO 27001, SOC 2, GDPR, the EU AI Act and OWASP to technical evidence across GitHub, application security, cloud, privacy and AI governance. The TypeScript engine classifies controls as compliant, partial or gap, assigns risk and generates Markdown, JSON and CSV reports.
+This project is an AI SaaS security and compliance fit-gap automation lab. It maps frameworks such as NIST CSF 2.0, ISO 27001, SOC 2, GDPR, the EU AI Act and OWASP to technical evidence across GitHub, application security, cloud, privacy and AI governance. The TypeScript engine classifies repository evidence as Evidence Sufficient, Evidence Partial or Evidence Gap, assigns risk and generates Markdown, JSON and CSV reports.
 
 ## 90-Second Version
 

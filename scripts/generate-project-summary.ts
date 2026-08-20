@@ -3,9 +3,9 @@ import path from "path";
 
 type Summary = {
   totalControls: number;
-  compliant: number;
-  partial: number;
-  gaps: number;
+  evidenceSufficient: number;
+  evidencePartial: number;
+  evidenceGaps: number;
   highRiskFindings: number;
   mediumRiskFindings: number;
   lowRiskFindings: number;
@@ -44,7 +44,7 @@ function main(): void {
   const domains = unique(report.findings.map(finding => finding.domain));
   const frameworks = unique(report.findings.flatMap(finding => finding.frameworks));
   const highRisk = report.findings.filter(finding => finding.risk === "High");
-  const gaps = report.findings.filter(finding => finding.status === "Gap");
+  const gaps = report.findings.filter(finding => finding.status === "Evidence Gap");
 
   const lines: string[] = [];
 
@@ -77,9 +77,9 @@ function main(): void {
   lines.push("## Current Analysis Summary");
   lines.push("");
   lines.push(`- Total controls assessed: ${report.summary.totalControls}`);
-  lines.push(`- Compliant controls: ${report.summary.compliant}`);
-  lines.push(`- Partially covered controls: ${report.summary.partial}`);
-  lines.push(`- Gaps: ${report.summary.gaps}`);
+  lines.push(`- Evidence-sufficient controls: ${report.summary.evidenceSufficient}`);
+  lines.push(`- Evidence-partial controls: ${report.summary.evidencePartial}`);
+  lines.push(`- Evidence gaps: ${report.summary.evidenceGaps}`);
   lines.push(`- High-risk findings: ${report.summary.highRiskFindings}`);
   lines.push(`- Medium-risk findings: ${report.summary.mediumRiskFindings}`);
   lines.push(`- Low-risk findings: ${report.summary.lowRiskFindings}`);

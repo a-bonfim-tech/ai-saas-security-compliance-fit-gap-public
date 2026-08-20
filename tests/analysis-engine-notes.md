@@ -25,7 +25,7 @@ The engine should:
 1. Read `controls/control-catalog.json`.
 2. Read `evidence/evidence-register.json`.
 3. Compare expected evidence against available evidence.
-4. Classify each control as `Compliant`, `Partial`, or `Gap`.
+4. Classify each control as `Evidence Sufficient`, `Evidence Partial`, or `Evidence Gap`.
 5. Assign a basic risk rating.
 6. Generate Markdown, JSON, and CSV outputs.
 

@@ -6,7 +6,7 @@ type Finding = {
   domain: string;
   title: string;
   frameworks: string[];
-  status: "Compliant" | "Partial" | "Gap";
+  status: "Evidence Sufficient" | "Evidence Partial" | "Evidence Gap";
   risk: "Low" | "Medium" | "High" | "Critical";
   foundEvidence: string[];
   missingEvidence: string[];
@@ -18,9 +18,9 @@ type Report = {
   methodology: string;
   summary: {
     totalControls: number;
-    compliant: number;
-    partial: number;
-    gaps: number;
+    evidenceSufficient: number;
+    evidencePartial: number;
+    evidenceGaps: number;
     highRiskFindings: number;
     mediumRiskFindings: number;
     lowRiskFindings: number;
@@ -170,7 +170,7 @@ function main(): void {
   const report = readJson<Report>("reports/json/fit-gap-analysis.json");
 
   const roadmapItems = report.findings
-    .filter(finding => finding.status !== "Compliant")
+    .filter(finding => finding.status !== "Evidence Sufficient")
     .map(buildRoadmapItem)
     .sort((a, b) => {
       const order = { P0: 0, P1: 1, P2: 2, P3: 3 };

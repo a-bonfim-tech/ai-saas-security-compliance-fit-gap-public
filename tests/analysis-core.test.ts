@@ -11,30 +11,30 @@ import {
 } from "../scripts/analysis-core";
 
 describe("analysis core", () => {
-  it("classifies a fully evidenced control as Compliant", () => {
-    expect(calculateStatus(["a", "b"], ["a", "b"])).toBe("Compliant");
+  it("classifies a fully evidenced control as Evidence Sufficient", () => {
+    expect(calculateStatus(["a", "b"], ["a", "b"])).toBe("Evidence Sufficient");
   });
 
-  it("classifies a partially evidenced control as Partial", () => {
-    expect(calculateStatus(["a", "b"], ["a"])).toBe("Partial");
+  it("classifies a partially evidenced control as Evidence Partial", () => {
+    expect(calculateStatus(["a", "b"], ["a"])).toBe("Evidence Partial");
   });
 
-  it("classifies a control with no evidence as Gap", () => {
-    expect(calculateStatus(["a", "b"], [])).toBe("Gap");
+  it("classifies a control with no evidence as Evidence Gap", () => {
+    expect(calculateStatus(["a", "b"], [])).toBe("Evidence Gap");
   });
 
-  it("assigns Low risk to compliant controls", () => {
-    expect(calculateRisk("Compliant", "AI Governance")).toBe("Low");
+  it("assigns Low risk to evidence-sufficient states", () => {
+    expect(calculateRisk("Evidence Sufficient", "AI Governance")).toBe("Low");
   });
 
   it("assigns High risk to high-risk domain gaps", () => {
-    expect(calculateRisk("Gap", "AI Governance")).toBe("High");
-    expect(calculateRisk("Gap", "Privacy and Data Protection")).toBe("High");
-    expect(calculateRisk("Gap", "Cloud Security")).toBe("High");
+    expect(calculateRisk("Evidence Gap", "AI Governance")).toBe("High");
+    expect(calculateRisk("Evidence Gap", "Privacy and Data Protection")).toBe("High");
+    expect(calculateRisk("Evidence Gap", "Cloud Security")).toBe("High");
   });
 
   it("assigns Medium risk to non-high-risk domain gaps", () => {
-    expect(calculateRisk("Gap", "Application Security")).toBe("Medium");
+    expect(calculateRisk("Evidence Gap", "Application Security")).toBe("Medium");
   });
 
   it("assesses control evidence correctly", () => {
@@ -64,7 +64,7 @@ describe("analysis core", () => {
     const finding = assessControl(control, evidence);
 
     expect(finding.controlId).toBe("TEST-001");
-    expect(finding.status).toBe("Partial");
+    expect(finding.status).toBe("Evidence Partial");
     expect(finding.foundEvidence).toEqual(["a"]);
     expect(finding.missingEvidence).toEqual(["b"]);
   });
@@ -76,7 +76,7 @@ describe("analysis core", () => {
         domain: "Application Security",
         title: "A",
         frameworks: ["OWASP"],
-        status: "Compliant" as const,
+        status: "Evidence Sufficient" as const,
         risk: "Low" as const,
         foundEvidence: [],
         missingEvidence: [],
@@ -87,7 +87,7 @@ describe("analysis core", () => {
         domain: "AI Governance",
         title: "B",
         frameworks: ["EU AI Act"],
-        status: "Gap" as const,
+        status: "Evidence Gap" as const,
         risk: "High" as const,
         foundEvidence: [],
         missingEvidence: ["x"],
@@ -98,8 +98,8 @@ describe("analysis core", () => {
     const summary = buildSummary(findings);
 
     expect(summary.totalControls).toBe(2);
-    expect(summary.compliant).toBe(1);
-    expect(summary.gaps).toBe(1);
+    expect(summary.evidenceSufficient).toBe(1);
+    expect(summary.evidenceGaps).toBe(1);
     expect(summary.highRiskFindings).toBe(1);
     expect(summary.lowRiskFindings).toBe(1);
   });
@@ -115,7 +115,7 @@ describe("analysis core", () => {
         domain: "Application Security",
         title: "Test control",
         frameworks: ["OWASP"],
-        status: "Partial",
+        status: "Evidence Partial",
         risk: "Medium",
         foundEvidence: ["a"],
         missingEvidence: ["b"],

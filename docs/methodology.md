@@ -40,9 +40,9 @@ Evidence may come from the following areas:
 
 | Status | Meaning |
 |---|---|
-| Compliant | Expected evidence exists and appears sufficient for the control. |
-| Partial | Some evidence exists, but the control is incomplete. |
-| Gap | Expected evidence is missing or the control is not implemented. |
+| Evidence Sufficient | All expected repository evidence items for the modeled control are present. |
+| Evidence Partial | Some but not all expected repository evidence items for the modeled control are present. |
+| Evidence Gap | No expected repository evidence items for the modeled control are present. |
 | Unknown | The current state cannot be determined from available evidence. |
 
 ## Risk Rating Criteria
@@ -68,5 +68,15 @@ Evidence may come from the following areas:
 10. Generate executive and technical reports.
 
 ## Limitations
+
+## Evidence-status semantics
+
+The analysis engine reports repository evidence state, not compliance or control effectiveness.
+
+- `Evidence Sufficient`: all expected repository evidence items for the modeled control are present.
+- `Evidence Partial`: some but not all expected repository evidence items for the modeled control are present.
+- `Evidence Gap`: no expected repository evidence items for the modeled control are present.
+
+These statuses do not establish formal compliance, control implementation, operational effectiveness, certification or audit readiness. They also do not establish evidence authenticity beyond the provenance represented by the repository.
 
 This methodology does not provide formal legal advice, audit certification or regulatory assurance. It is a technical and educational model for structuring security and compliance readiness work.

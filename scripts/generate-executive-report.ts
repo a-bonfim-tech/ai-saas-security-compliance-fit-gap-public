@@ -6,7 +6,7 @@ type Finding = {
   domain: string;
   title: string;
   frameworks: string[];
-  status: "Compliant" | "Partial" | "Gap";
+  status: "Evidence Sufficient" | "Evidence Partial" | "Evidence Gap";
   risk: "Low" | "Medium" | "High" | "Critical";
   foundEvidence: string[];
   missingEvidence: string[];
@@ -18,9 +18,9 @@ type Report = {
   methodology: string;
   summary: {
     totalControls: number;
-    compliant: number;
-    partial: number;
-    gaps: number;
+    evidenceSufficient: number;
+    evidencePartial: number;
+    evidenceGaps: number;
     highRiskFindings: number;
     mediumRiskFindings: number;
     lowRiskFindings: number;
@@ -47,8 +47,8 @@ function main(): void {
   const report = readJson<Report>("reports/json/fit-gap-analysis.json");
 
   const highRisk = report.findings.filter(finding => finding.risk === "High" || finding.risk === "Critical");
-  const gaps = report.findings.filter(finding => finding.status === "Gap");
-  const partial = report.findings.filter(finding => finding.status === "Partial");
+  const gaps = report.findings.filter(finding => finding.status === "Evidence Gap");
+  const partial = report.findings.filter(finding => finding.status === "Evidence Partial");
   const domains = Array.from(new Set(report.findings.map(finding => finding.domain))).sort();
 
   const lines: string[] = [];
@@ -66,9 +66,9 @@ function main(): void {
   lines.push("## Readiness Snapshot");
   lines.push("");
   lines.push(`- Total controls assessed: ${report.summary.totalControls}`);
-  lines.push(`- Compliant controls: ${report.summary.compliant} (${percentage(report.summary.compliant, report.summary.totalControls)})`);
-  lines.push(`- Partially covered controls: ${report.summary.partial} (${percentage(report.summary.partial, report.summary.totalControls)})`);
-  lines.push(`- Open gaps: ${report.summary.gaps} (${percentage(report.summary.gaps, report.summary.totalControls)})`);
+  lines.push(`- Evidence-sufficient controls: ${report.summary.evidenceSufficient} (${percentage(report.summary.evidenceSufficient, report.summary.totalControls)})`);
+  lines.push(`- Evidence-partial controls: ${report.summary.evidencePartial} (${percentage(report.summary.evidencePartial, report.summary.totalControls)})`);
+  lines.push(`- Evidence gaps: ${report.summary.evidenceGaps} (${percentage(report.summary.evidenceGaps, report.summary.totalControls)})`);
   lines.push(`- High-risk findings: ${report.summary.highRiskFindings}`);
   lines.push(`- Medium-risk findings: ${report.summary.mediumRiskFindings}`);
   lines.push(`- Low-risk findings: ${report.summary.lowRiskFindings}`);

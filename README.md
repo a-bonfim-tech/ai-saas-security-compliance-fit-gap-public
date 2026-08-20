@@ -111,7 +111,7 @@ The current TypeScript analysis engine can:
 2. Read a structured evidence register.
 3. Ingest domain evidence from application, cloud, privacy and AI governance templates.
 4. Match expected evidence against available evidence.
-5. Classify controls as `Compliant`, `Partial`, or `Gap`.
+5. Classify controls as `Evidence Sufficient`, `Evidence Partial`, or `Evidence Gap`.
 6. Assign a basic risk rating.
 7. Generate Markdown, JSON and CSV fit-gap reports.
 8. Collect local GitHub repository evidence from files and workflows.
@@ -241,9 +241,9 @@ For an AI-enabled B2B SaaS environment, the project can be used to:
 The current generated fit-gap report records:
 
 - 14 controls assessed;
-- 1 compliant control;
-- 3 partially covered controls;
-- 10 gaps;
+- 1 evidence-sufficient control;
+- 3 evidence-partial controls;
+- 10 evidence gaps;
 - 7 high-risk findings;
 - 6 medium-risk findings;
 - 1 low-risk finding.
@@ -265,9 +265,9 @@ reports/executive/executive-readiness-report.md
 ## Status Labels
 
 ~~~text
-Compliant   - Expected evidence exists and is sufficient.
-Partial     - Some evidence exists, but the control is incomplete.
-Gap         - Required evidence or implementation is missing.
+Evidence Sufficient - All expected repository evidence for the modeled control is present.
+Evidence Partial - Some but not all expected repository evidence for the modeled control is present.
+Evidence Gap - No expected repository evidence for the modeled control is present.
 Unknown     - The current state cannot be determined from available evidence.
 ~~~
 

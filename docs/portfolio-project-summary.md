@@ -37,9 +37,9 @@ Framework -> Requirement -> Control -> Evidence -> Status -> Gap -> Risk -> Reco
 ## Current Analysis Summary
 
 - Total controls assessed: 14
-- Compliant controls: 1
-- Partially covered controls: 3
-- Gaps: 10
+- Evidence-sufficient controls: 1
+- Evidence-partial controls: 3
+- Evidence gaps: 10
 - High-risk findings: 7
 - Medium-risk findings: 6
 - Low-risk findings: 1

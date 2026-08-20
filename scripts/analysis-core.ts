@@ -13,7 +13,7 @@ export type Evidence = {
   notes: string;
 };
 
-export type Status = "Compliant" | "Partial" | "Gap";
+export type Status = "Evidence Sufficient" | "Evidence Partial" | "Evidence Gap";
 
 export type Risk = "Low" | "Medium" | "High" | "Critical";
 
@@ -31,9 +31,9 @@ export type Finding = {
 
 export type Summary = {
   totalControls: number;
-  compliant: number;
-  partial: number;
-  gaps: number;
+  evidenceSufficient: number;
+  evidencePartial: number;
+  evidenceGaps: number;
   highRiskFindings: number;
   mediumRiskFindings: number;
   lowRiskFindings: number;
@@ -47,13 +47,13 @@ export type Report = {
 };
 
 export function calculateStatus(expected: string[], found: string[]): Status {
-  if (found.length === expected.length) return "Compliant";
-  if (found.length > 0) return "Partial";
-  return "Gap";
+  if (found.length === expected.length) return "Evidence Sufficient";
+  if (found.length > 0) return "Evidence Partial";
+  return "Evidence Gap";
 }
 
 export function calculateRisk(status: Status, domain: string): Risk {
-  if (status === "Compliant") return "Low";
+  if (status === "Evidence Sufficient") return "Low";
 
   const highRiskDomains = [
     "Identity and Access Management",
@@ -63,14 +63,14 @@ export function calculateRisk(status: Status, domain: string): Risk {
     "Cloud Security"
   ];
 
-  if (status === "Gap" && highRiskDomains.includes(domain)) return "High";
-  if (status === "Gap") return "Medium";
+  if (status === "Evidence Gap" && highRiskDomains.includes(domain)) return "High";
+  if (status === "Evidence Gap") return "Medium";
   return "Medium";
 }
 
 export function buildRecommendation(status: Status, missingEvidence: string[]): string {
-  if (status === "Compliant") {
-    return "Maintain the control and periodically refresh the supporting evidence.";
+  if (status === "Evidence Sufficient") {
+    return "Periodically refresh and revalidate the supporting repository evidence.";
   }
 
   return `Implement or document the following missing evidence: ${missingEvidence.join(", ")}.`;
@@ -104,9 +104,9 @@ export function assessControl(control: Control, evidence: Evidence[]): Finding {
 export function buildSummary(findings: Finding[]): Summary {
   return {
     totalControls: findings.length,
-    compliant: findings.filter(finding => finding.status === "Compliant").length,
-    partial: findings.filter(finding => finding.status === "Partial").length,
-    gaps: findings.filter(finding => finding.status === "Gap").length,
+    evidenceSufficient: findings.filter(finding => finding.status === "Evidence Sufficient").length,
+    evidencePartial: findings.filter(finding => finding.status === "Evidence Partial").length,
+    evidenceGaps: findings.filter(finding => finding.status === "Evidence Gap").length,
     highRiskFindings: findings.filter(finding => finding.risk === "High").length,
     mediumRiskFindings: findings.filter(finding => finding.risk === "Medium").length,
     lowRiskFindings: findings.filter(finding => finding.risk === "Low").length
@@ -165,9 +165,9 @@ export function generateMarkdown(report: Report): string {
   lines.push("## Executive Summary");
   lines.push("");
   lines.push(`- Total controls assessed: ${report.summary.totalControls}`);
-  lines.push(`- Compliant controls: ${report.summary.compliant}`);
-  lines.push(`- Partially covered controls: ${report.summary.partial}`);
-  lines.push(`- Gaps: ${report.summary.gaps}`);
+  lines.push(`- Evidence-sufficient controls: ${report.summary.evidenceSufficient}`);
+  lines.push(`- Evidence-partial controls: ${report.summary.evidencePartial}`);
+  lines.push(`- Evidence gaps: ${report.summary.evidenceGaps}`);
   lines.push(`- High-risk findings: ${report.summary.highRiskFindings}`);
   lines.push(`- Medium-risk findings: ${report.summary.mediumRiskFindings}`);
   lines.push(`- Low-risk findings: ${report.summary.lowRiskFindings}`);

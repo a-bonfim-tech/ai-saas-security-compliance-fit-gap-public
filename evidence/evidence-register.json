@@ -3,7 +3,13 @@
     "key": "advanced_security_reviewed",
     "present": false,
     "source": "gh api repos/a-bonfim-tech/ai-saas-security-compliance-fit-gap",
-    "notes": "GitHub Advanced Security status could not be determined."
+    "notes": "GitHub Advanced Security status could not be determined.",
+    "provenance": {
+      "assessment_repository": "a-bonfim-tech/ai-saas-security-compliance-fit-gap-public",
+      "source_repository": "a-bonfim-tech/ai-saas-security-compliance-fit-gap",
+      "source_collected_at": "2026-05-24T04:13:57.734Z",
+      "source_collector": "github-remote-evidence-collector"
+    }
   },
   {
     "key": "ai_data_flow_documented",
@@ -105,7 +111,13 @@
     "key": "collaborators_reviewed",
     "present": true,
     "source": "gh api repos/a-bonfim-tech/ai-saas-security-compliance-fit-gap/collaborators",
-    "notes": "Collaborator list was accessible. Collaborators found: 1."
+    "notes": "Collaborator list was accessible. Collaborators found: 1.",
+    "provenance": {
+      "assessment_repository": "a-bonfim-tech/ai-saas-security-compliance-fit-gap-public",
+      "source_repository": "a-bonfim-tech/ai-saas-security-compliance-fit-gap",
+      "source_collected_at": "2026-05-24T04:13:57.734Z",
+      "source_collector": "github-remote-evidence-collector"
+    }
   },
   {
     "key": "controller_processor_roles_reviewed",
@@ -135,7 +147,13 @@
     "key": "dependabot_alerts_enabled",
     "present": false,
     "source": "gh api repos/a-bonfim-tech/ai-saas-security-compliance-fit-gap/vulnerability-alerts",
-    "notes": "Dependabot vulnerability alerts could not be confirmed. This may require repository admin permissions."
+    "notes": "Dependabot vulnerability alerts could not be confirmed. This may require repository admin permissions.",
+    "provenance": {
+      "assessment_repository": "a-bonfim-tech/ai-saas-security-compliance-fit-gap-public",
+      "source_repository": "a-bonfim-tech/ai-saas-security-compliance-fit-gap",
+      "source_collected_at": "2026-05-24T04:13:57.734Z",
+      "source_collector": "github-remote-evidence-collector"
+    }
   },
   {
     "key": "dependabot_enabled",
@@ -231,7 +249,13 @@
     "key": "push_protection_enabled",
     "present": false,
     "source": "gh api repos/a-bonfim-tech/ai-saas-security-compliance-fit-gap",
-    "notes": "Push protection status could not be determined."
+    "notes": "Push protection status could not be determined.",
+    "provenance": {
+      "assessment_repository": "a-bonfim-tech/ai-saas-security-compliance-fit-gap-public",
+      "source_repository": "a-bonfim-tech/ai-saas-security-compliance-fit-gap",
+      "source_collected_at": "2026-05-24T04:13:57.734Z",
+      "source_collector": "github-remote-evidence-collector"
+    }
   },
   {
     "key": "rate_limiting_reviewed",
@@ -255,7 +279,13 @@
     "key": "repository_visibility_reviewed",
     "present": true,
     "source": "gh repo view --json visibility,isPrivate",
-    "notes": "Repository visibility detected as PRIVATE. Private: true."
+    "notes": "Repository visibility detected as PRIVATE. Private: true.",
+    "provenance": {
+      "assessment_repository": "a-bonfim-tech/ai-saas-security-compliance-fit-gap-public",
+      "source_repository": "a-bonfim-tech/ai-saas-security-compliance-fit-gap",
+      "source_collected_at": "2026-05-24T04:13:57.734Z",
+      "source_collector": "github-remote-evidence-collector"
+    }
   },
   {
     "key": "risk_management_process_defined",
@@ -267,7 +297,13 @@
     "key": "secret_scanning_enabled",
     "present": false,
     "source": "gh api repos/a-bonfim-tech/ai-saas-security-compliance-fit-gap",
-    "notes": "Secret scanning status could not be determined."
+    "notes": "Secret scanning status could not be determined.",
+    "provenance": {
+      "assessment_repository": "a-bonfim-tech/ai-saas-security-compliance-fit-gap-public",
+      "source_repository": "a-bonfim-tech/ai-saas-security-compliance-fit-gap",
+      "source_collected_at": "2026-05-24T04:13:57.734Z",
+      "source_collector": "github-remote-evidence-collector"
+    }
   },
   {
     "key": "secrets_management_documented",
@@ -297,7 +333,13 @@
     "key": "status_checks_required",
     "present": false,
     "source": "gh api repos/a-bonfim-tech/ai-saas-security-compliance-fit-gap/branches/main/protection",
-    "notes": "Required status checks could not be confirmed."
+    "notes": "Required status checks could not be confirmed.",
+    "provenance": {
+      "assessment_repository": "a-bonfim-tech/ai-saas-security-compliance-fit-gap-public",
+      "source_repository": "a-bonfim-tech/ai-saas-security-compliance-fit-gap",
+      "source_collected_at": "2026-05-24T04:13:57.734Z",
+      "source_collector": "github-remote-evidence-collector"
+    }
   },
   {
     "key": "typescript_typecheck_defined",

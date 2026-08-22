@@ -160,14 +160,29 @@ function mergeEvidence(
       item.source !== null &&
       existing.source === item.source;
 
+    const existingIsForeignRemoteEvidence =
+      existing.provenance?.source_collector ===
+        remoteProvenance.source_collector &&
+      existing.provenance?.assessment_repository ===
+        remoteProvenance.assessment_repository &&
+      existing.provenance?.source_repository !==
+        remoteProvenance.source_repository;
+
     const remoteSourceBecomesAuthoritative =
-      item.present || remoteSourceMatchesExisting;
+      item.present ||
+      remoteSourceMatchesExisting ||
+      existingIsForeignRemoteEvidence;
 
     merged.set(item.key, {
       ...existing,
       key: item.key,
-      present: item.present || existing.present,
-      source: item.present ? item.source : existing.source,
+      present: existingIsForeignRemoteEvidence
+        ? item.present
+        : item.present || existing.present,
+      source:
+        item.present || existingIsForeignRemoteEvidence
+          ? item.source
+          : existing.source,
       notes: item.present
         ? appendRemoteNoteOnce(
             existing.notes,

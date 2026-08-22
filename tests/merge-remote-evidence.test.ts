@@ -282,6 +282,90 @@ describe("AUD-008 remote evidence provenance", () => {
     });
   });
 
+  it("replaces legacy repository-settings positives with fresh remote state", () => {
+    const fixture = createFixture(
+      "https://github.com/a-bonfim-tech/ai-saas-security-compliance-fit-gap-public.git"
+    );
+
+    const register = JSON.parse(
+      fs.readFileSync(
+        fixture.registerPath,
+        "utf8"
+      )
+    ) as Array<any>;
+
+    register.push({
+      key: "pull_request_reviews_required",
+      present: true,
+      source: "github/repository-settings",
+      notes: "Pull request reviews are required."
+    });
+
+    writeJson(
+      fixture.registerPath,
+      register
+    );
+
+    const snapshot = JSON.parse(
+      fs.readFileSync(
+        fixture.snapshotPath,
+        "utf8"
+      )
+    ) as any;
+
+    snapshot.repository =
+      "a-bonfim-tech/ai-saas-security-compliance-fit-gap-public";
+
+    snapshot.collectedAt =
+      "2026-08-22T08:00:00.000Z";
+
+    snapshot.evidence.push({
+      key: "pull_request_reviews_required",
+      present: false,
+      source:
+        "gh api repos/a-bonfim-tech/ai-saas-security-compliance-fit-gap-public/rulesets",
+      notes:
+        "An active ruleset targets the default branch, but it does not require an approving review."
+    });
+
+    writeJson(
+      fixture.snapshotPath,
+      snapshot
+    );
+
+    executeMerge(fixture.directory);
+
+    const evidence = JSON.parse(
+      fs.readFileSync(
+        fixture.registerPath,
+        "utf8"
+      )
+    ) as Array<any>;
+
+    const item = evidence.find(
+      entry =>
+        entry.key ===
+        "pull_request_reviews_required"
+    );
+
+    expect(item.present).toBe(false);
+
+    expect(item.source).toBe(
+      "gh api repos/a-bonfim-tech/ai-saas-security-compliance-fit-gap-public/rulesets"
+    );
+
+    expect(item.provenance).toEqual({
+      assessment_repository:
+        "a-bonfim-tech/ai-saas-security-compliance-fit-gap-public",
+      source_repository:
+        "a-bonfim-tech/ai-saas-security-compliance-fit-gap-public",
+      source_collected_at:
+        "2026-08-22T08:00:00.000Z",
+      source_collector:
+        "github-remote-evidence-collector"
+    });
+  });
+
   it("replaces foreign remote evidence even when the fresh state is unconfirmed", () => {
     const fixture = createFixture(
       "https://github.com/a-bonfim-tech/ai-saas-security-compliance-fit-gap-public.git"

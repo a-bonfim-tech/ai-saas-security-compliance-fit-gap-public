@@ -1,6 +1,6 @@
 {
   "repositoryPath": ".",
-  "collectedAt": "2026-08-08T15:28:29.380Z",
+  "collectedAt": "2026-08-22T08:53:56.229Z",
   "collector": "github-local-evidence-collector",
   "evidence": [
     {
@@ -23,9 +23,9 @@
     },
     {
       "key": "dependency_review_enabled",
-      "present": false,
+      "present": true,
       "source": ".github/workflows",
-      "notes": "Dependency review workflow was not found."
+      "notes": "Dependency review workflow is configured."
     },
     {
       "key": "codeowners_configured",

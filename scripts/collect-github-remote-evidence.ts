@@ -51,15 +51,40 @@ function ghApiJson<T>(endpoint: string): T | null {
   return runJson<T>("gh", ["api", endpoint]);
 }
 
+function parseHttpStatus(output: string): number | null {
+  const match = output.match(/^HTTP\/\S+\s+(\d{3})/m);
+
+  if (!match) {
+    return null;
+  }
+
+  return Number(match[1]);
+}
+
 function ghApiStatus(endpoint: string): number | null {
   try {
-    execFileSync("gh", ["api", endpoint], {
-      encoding: "utf8",
-      stdio: ["ignore", "pipe", "pipe"]
-    });
-    return 200;
+    const output = execFileSync(
+      "gh",
+      ["api", "--include", endpoint],
+      {
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "pipe"]
+      }
+    );
+
+    return parseHttpStatus(output);
   } catch (error: any) {
-    return error?.status ?? null;
+    const stdout =
+      typeof error?.stdout === "string"
+        ? error.stdout
+        : "";
+
+    const stderr =
+      typeof error?.stderr === "string"
+        ? error.stderr
+        : "";
+
+    return parseHttpStatus(`${stdout}\n${stderr}`);
   }
 }
 
@@ -89,35 +114,153 @@ function collectRemoteEvidence(repository: string): RemoteEvidenceReport {
       : "Repository visibility could not be determined."
   });
 
-  const branchProtectionStatus = ghApiStatus(`repos/${repository}/branches/${defaultBranch}/protection`);
+  const branchProtectionEndpoint =
+    `repos/${repository}/branches/${defaultBranch}/protection`;
+
+  const branchProtectionStatus =
+    ghApiStatus(branchProtectionEndpoint);
+
+  const branchProtection =
+    ghApiJson<any>(branchProtectionEndpoint);
+
+  const rulesetSummaries =
+    ghApiJson<any[]>(
+      `repos/${repository}/rulesets?includes_parents=true`
+    ) ?? [];
+
+  const activeBranchRulesets =
+    rulesetSummaries.filter(
+      ruleset =>
+        ruleset?.target === "branch" &&
+        ruleset?.enforcement === "active"
+    );
+
+  const activeMainRulesets = activeBranchRulesets
+    .map(ruleset =>
+      ghApiJson<any>(
+        `repos/${repository}/rulesets/${ruleset.id}`
+      )
+    )
+    .filter((ruleset): ruleset is any =>
+      Boolean(ruleset)
+    )
+    .filter(ruleset => {
+      const include =
+        ruleset?.conditions?.ref_name?.include;
+
+      return (
+        Array.isArray(include) &&
+        (
+          include.includes(
+            `refs/heads/${defaultBranch}`
+          ) ||
+          include.includes("~DEFAULT_BRANCH")
+        )
+      );
+    });
+
+  const rulesetPullRequestRules =
+    activeMainRulesets.flatMap(ruleset =>
+      Array.isArray(ruleset?.rules)
+        ? ruleset.rules.filter(
+            (rule: any) =>
+              rule?.type === "pull_request"
+          )
+        : []
+    );
+
+  const rulesetStatusCheckRules =
+    activeMainRulesets.flatMap(ruleset =>
+      Array.isArray(ruleset?.rules)
+        ? ruleset.rules.filter(
+            (rule: any) =>
+              rule?.type ===
+              "required_status_checks"
+          )
+        : []
+    );
+
+  const rulesetApprovalRequired =
+    rulesetPullRequestRules.some(
+      (rule: any) =>
+        Number(
+          rule?.parameters
+            ?.required_approving_review_count ?? 0
+        ) > 0
+    );
+
+  const rulesetStatusChecksRequired =
+    rulesetStatusCheckRules.some(
+      (rule: any) =>
+        Array.isArray(
+          rule?.parameters
+            ?.required_status_checks
+        ) &&
+        rule.parameters.required_status_checks
+          .length > 0
+    );
+
+  const activeMainRulesetPresent =
+    activeMainRulesets.length > 0;
+
+  const branchGovernanceConfirmed =
+    branchProtectionStatus === 200 ||
+    activeMainRulesetPresent;
 
   evidence.push({
     key: "branch_protection_enabled",
-    present: branchProtectionStatus === 200,
-    source: `gh api repos/${repository}/branches/${defaultBranch}/protection`,
+    present: branchGovernanceConfirmed,
+    source: activeMainRulesetPresent
+      ? `gh api repos/${repository}/rulesets`
+      : branchProtectionEndpoint,
     notes: branchProtectionStatus === 200
-      ? `Branch protection is enabled for ${defaultBranch}.`
-      : `Branch protection could not be confirmed for ${defaultBranch}. This may mean it is disabled or the token lacks permission.`
+      ? `Classic branch protection is enabled for ${defaultBranch}.`
+      : activeMainRulesetPresent
+        ? `An active GitHub ruleset targets ${defaultBranch}. Classic branch protection remains unconfirmed.`
+        : `Neither classic branch protection nor an active ruleset targeting ${defaultBranch} could be confirmed.`
   });
 
-  const branchProtection = ghApiJson<any>(`repos/${repository}/branches/${defaultBranch}/protection`);
+  const classicPullRequestReviewsRequired =
+    Boolean(
+      branchProtection
+        ?.required_pull_request_reviews
+    );
+
+  const pullRequestReviewsRequired =
+    classicPullRequestReviewsRequired ||
+    rulesetApprovalRequired;
 
   evidence.push({
     key: "pull_request_reviews_required",
-    present: Boolean(branchProtection?.required_pull_request_reviews),
-    source: `gh api repos/${repository}/branches/${defaultBranch}/protection`,
-    notes: branchProtection?.required_pull_request_reviews
-      ? "Required pull request reviews are configured in branch protection."
-      : "Required pull request reviews could not be confirmed."
+    present: pullRequestReviewsRequired,
+    source: activeMainRulesetPresent
+      ? `gh api repos/${repository}/rulesets`
+      : branchProtectionEndpoint,
+    notes: pullRequestReviewsRequired
+      ? "At least one confirmed branch-governance mechanism requires approving pull request reviews."
+      : activeMainRulesetPresent
+        ? "An active ruleset targets the default branch, but it does not require an approving review."
+        : "Required approving pull request reviews could not be confirmed."
   });
+
+  const classicStatusChecksRequired =
+    Boolean(
+      branchProtection?.required_status_checks
+    );
+
+  const statusChecksRequired =
+    classicStatusChecksRequired ||
+    rulesetStatusChecksRequired;
 
   evidence.push({
     key: "status_checks_required",
-    present: Boolean(branchProtection?.required_status_checks),
-    source: `gh api repos/${repository}/branches/${defaultBranch}/protection`,
-    notes: branchProtection?.required_status_checks
-      ? "Required status checks are configured in branch protection."
-      : "Required status checks could not be confirmed."
+    present: statusChecksRequired,
+    source: activeMainRulesetPresent
+      ? `gh api repos/${repository}/rulesets`
+      : branchProtectionEndpoint,
+    notes: statusChecksRequired
+      ? "Required status checks are configured for the default branch."
+      : "Required status checks could not be confirmed for the default branch."
   });
 
   const vulnerabilityAlertsStatus = ghApiStatus(`repos/${repository}/vulnerability-alerts`);
@@ -179,8 +322,20 @@ function collectRemoteEvidence(repository: string): RemoteEvidenceReport {
     warnings.push("Some repository-level evidence may be incomplete because repository metadata was unavailable.");
   }
 
-  if (branchProtectionStatus !== 200) {
-    warnings.push("Branch protection evidence is not confirmed. Review repository settings manually.");
+  if (
+    branchProtectionStatus !== 200 &&
+    !activeMainRulesetPresent
+  ) {
+    warnings.push(
+      "Neither classic branch protection nor an active ruleset targeting the default branch could be confirmed."
+    );
+  } else if (
+    branchProtectionStatus !== 200 &&
+    activeMainRulesetPresent
+  ) {
+    warnings.push(
+      "Classic branch protection is unconfirmed; repository governance is instead evidenced by an active ruleset targeting the default branch."
+    );
   }
 
   if (vulnerabilityAlertsStatus !== 204) {

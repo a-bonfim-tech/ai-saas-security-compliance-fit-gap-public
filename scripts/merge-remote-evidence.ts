@@ -168,19 +168,29 @@ function mergeEvidence(
       existing.provenance?.source_repository !==
         remoteProvenance.source_repository;
 
+    const existingIsLegacyRepositorySettingsEvidence =
+      existing.source === "github/repository-settings" &&
+      existing.provenance === undefined;
+
     const remoteSourceBecomesAuthoritative =
       item.present ||
       remoteSourceMatchesExisting ||
-      existingIsForeignRemoteEvidence;
+      existingIsForeignRemoteEvidence ||
+      existingIsLegacyRepositorySettingsEvidence;
+
+    const freshRemoteStateIsAuthoritative =
+      existingIsForeignRemoteEvidence ||
+      existingIsLegacyRepositorySettingsEvidence;
 
     merged.set(item.key, {
       ...existing,
       key: item.key,
-      present: existingIsForeignRemoteEvidence
+      present: freshRemoteStateIsAuthoritative
         ? item.present
         : item.present || existing.present,
       source:
-        item.present || existingIsForeignRemoteEvidence
+        item.present ||
+        freshRemoteStateIsAuthoritative
           ? item.source
           : existing.source,
       notes: item.present

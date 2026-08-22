@@ -1,6 +1,6 @@
 {
   "repository": "a-bonfim-tech/ai-saas-security-compliance-fit-gap-public",
-  "collectedAt": "2026-08-21T18:38:20.314Z",
+  "collectedAt": "2026-08-22T08:54:01.233Z",
   "collector": "github-remote-evidence-collector",
   "evidence": [
     {
@@ -11,27 +11,27 @@
     },
     {
       "key": "branch_protection_enabled",
-      "present": false,
-      "source": "gh api repos/a-bonfim-tech/ai-saas-security-compliance-fit-gap-public/branches/main/protection",
-      "notes": "Branch protection could not be confirmed for main. This may mean it is disabled or the token lacks permission."
+      "present": true,
+      "source": "gh api repos/a-bonfim-tech/ai-saas-security-compliance-fit-gap-public/rulesets",
+      "notes": "An active GitHub ruleset targets main. Classic branch protection remains unconfirmed."
     },
     {
       "key": "pull_request_reviews_required",
       "present": false,
-      "source": "gh api repos/a-bonfim-tech/ai-saas-security-compliance-fit-gap-public/branches/main/protection",
-      "notes": "Required pull request reviews could not be confirmed."
+      "source": "gh api repos/a-bonfim-tech/ai-saas-security-compliance-fit-gap-public/rulesets",
+      "notes": "An active ruleset targets the default branch, but it does not require an approving review."
     },
     {
       "key": "status_checks_required",
-      "present": false,
-      "source": "gh api repos/a-bonfim-tech/ai-saas-security-compliance-fit-gap-public/branches/main/protection",
-      "notes": "Required status checks could not be confirmed."
+      "present": true,
+      "source": "gh api repos/a-bonfim-tech/ai-saas-security-compliance-fit-gap-public/rulesets",
+      "notes": "Required status checks are configured for the default branch."
     },
     {
       "key": "dependabot_alerts_enabled",
-      "present": false,
+      "present": true,
       "source": "gh api repos/a-bonfim-tech/ai-saas-security-compliance-fit-gap-public/vulnerability-alerts",
-      "notes": "Dependabot vulnerability alerts could not be confirmed. This may require repository admin permissions."
+      "notes": "Dependabot vulnerability alerts are enabled."
     },
     {
       "key": "secret_scanning_enabled",
@@ -59,7 +59,6 @@
     }
   ],
   "warnings": [
-    "Branch protection evidence is not confirmed. Review repository settings manually.",
-    "Dependabot alert status is not confirmed. Review repository security settings manually."
+    "Classic branch protection is unconfirmed; repository governance is instead evidenced by an active ruleset targeting the default branch."
   ]
 }

@@ -282,6 +282,98 @@ describe("AUD-008 remote evidence provenance", () => {
     });
   });
 
+  it("replaces foreign remote evidence even when the fresh state is unconfirmed", () => {
+    const fixture = createFixture(
+      "https://github.com/a-bonfim-tech/ai-saas-security-compliance-fit-gap-public.git"
+    );
+
+    const register = JSON.parse(
+      fs.readFileSync(
+        fixture.registerPath,
+        "utf8"
+      )
+    ) as Array<any>;
+
+    register.push({
+      key: "foreign_remote_state",
+      present: true,
+      source:
+        "gh api repos/a-bonfim-tech/ai-saas-security-compliance-fit-gap/branches/main/protection",
+      notes: "Previously confirmed against another repository.",
+      provenance: {
+        assessment_repository:
+          "a-bonfim-tech/ai-saas-security-compliance-fit-gap-public",
+        source_repository:
+          "a-bonfim-tech/ai-saas-security-compliance-fit-gap",
+        source_collected_at:
+          "2026-01-01T00:00:00.000Z",
+        source_collector:
+          "github-remote-evidence-collector"
+      }
+    });
+
+    writeJson(
+      fixture.registerPath,
+      register
+    );
+
+    const snapshot = JSON.parse(
+      fs.readFileSync(
+        fixture.snapshotPath,
+        "utf8"
+      )
+    ) as any;
+
+    snapshot.repository =
+      "a-bonfim-tech/ai-saas-security-compliance-fit-gap-public";
+
+    snapshot.collectedAt =
+      "2026-08-21T18:30:00.000Z";
+
+    snapshot.evidence.push({
+      key: "foreign_remote_state",
+      present: false,
+      source:
+        "gh api repos/a-bonfim-tech/ai-saas-security-compliance-fit-gap-public/branches/main/protection",
+      notes: "Fresh state could not be confirmed."
+    });
+
+    writeJson(
+      fixture.snapshotPath,
+      snapshot
+    );
+
+    executeMerge(fixture.directory);
+
+    const evidence = JSON.parse(
+      fs.readFileSync(
+        fixture.registerPath,
+        "utf8"
+      )
+    ) as Array<any>;
+
+    const item = evidence.find(
+      entry => entry.key === "foreign_remote_state"
+    );
+
+    expect(item.present).toBe(false);
+
+    expect(item.source).toBe(
+      "gh api repos/a-bonfim-tech/ai-saas-security-compliance-fit-gap-public/branches/main/protection"
+    );
+
+    expect(item.provenance).toEqual({
+      assessment_repository:
+        "a-bonfim-tech/ai-saas-security-compliance-fit-gap-public",
+      source_repository:
+        "a-bonfim-tech/ai-saas-security-compliance-fit-gap-public",
+      source_collected_at:
+        "2026-08-21T18:30:00.000Z",
+      source_collector:
+        "github-remote-evidence-collector"
+    });
+  });
+
   it("is byte-for-byte idempotent for identical remote input", () => {
     const fixture = createFixture(
       "https://github.com/a-bonfim-tech/ai-saas-security-compliance-fit-gap-public.git"

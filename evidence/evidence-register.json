@@ -2,12 +2,12 @@
   {
     "key": "advanced_security_reviewed",
     "present": false,
-    "source": "gh api repos/a-bonfim-tech/ai-saas-security-compliance-fit-gap",
+    "source": "gh api repos/a-bonfim-tech/ai-saas-security-compliance-fit-gap-public",
     "notes": "GitHub Advanced Security status could not be determined.",
     "provenance": {
       "assessment_repository": "a-bonfim-tech/ai-saas-security-compliance-fit-gap-public",
-      "source_repository": "a-bonfim-tech/ai-saas-security-compliance-fit-gap",
-      "source_collected_at": "2026-05-24T04:13:57.734Z",
+      "source_repository": "a-bonfim-tech/ai-saas-security-compliance-fit-gap-public",
+      "source_collected_at": "2026-08-21T18:38:20.314Z",
       "source_collector": "github-remote-evidence-collector"
     }
   },
@@ -110,12 +110,12 @@
   {
     "key": "collaborators_reviewed",
     "present": true,
-    "source": "gh api repos/a-bonfim-tech/ai-saas-security-compliance-fit-gap/collaborators",
+    "source": "gh api repos/a-bonfim-tech/ai-saas-security-compliance-fit-gap-public/collaborators",
     "notes": "Collaborator list was accessible. Collaborators found: 1.",
     "provenance": {
       "assessment_repository": "a-bonfim-tech/ai-saas-security-compliance-fit-gap-public",
-      "source_repository": "a-bonfim-tech/ai-saas-security-compliance-fit-gap",
-      "source_collected_at": "2026-05-24T04:13:57.734Z",
+      "source_repository": "a-bonfim-tech/ai-saas-security-compliance-fit-gap-public",
+      "source_collected_at": "2026-08-21T18:38:20.314Z",
       "source_collector": "github-remote-evidence-collector"
     }
   },
@@ -146,12 +146,12 @@
   {
     "key": "dependabot_alerts_enabled",
     "present": false,
-    "source": "gh api repos/a-bonfim-tech/ai-saas-security-compliance-fit-gap/vulnerability-alerts",
+    "source": "gh api repos/a-bonfim-tech/ai-saas-security-compliance-fit-gap-public/vulnerability-alerts",
     "notes": "Dependabot vulnerability alerts could not be confirmed. This may require repository admin permissions.",
     "provenance": {
       "assessment_repository": "a-bonfim-tech/ai-saas-security-compliance-fit-gap-public",
-      "source_repository": "a-bonfim-tech/ai-saas-security-compliance-fit-gap",
-      "source_collected_at": "2026-05-24T04:13:57.734Z",
+      "source_repository": "a-bonfim-tech/ai-saas-security-compliance-fit-gap-public",
+      "source_collected_at": "2026-08-21T18:38:20.314Z",
       "source_collector": "github-remote-evidence-collector"
     }
   },
@@ -247,13 +247,13 @@
   },
   {
     "key": "push_protection_enabled",
-    "present": false,
-    "source": "gh api repos/a-bonfim-tech/ai-saas-security-compliance-fit-gap",
-    "notes": "Push protection status could not be determined.",
+    "present": true,
+    "source": "gh api repos/a-bonfim-tech/ai-saas-security-compliance-fit-gap-public",
+    "notes": "Push protection status could not be determined. | Updated by remote collector: Secret scanning push protection status: enabled.",
     "provenance": {
       "assessment_repository": "a-bonfim-tech/ai-saas-security-compliance-fit-gap-public",
-      "source_repository": "a-bonfim-tech/ai-saas-security-compliance-fit-gap",
-      "source_collected_at": "2026-05-24T04:13:57.734Z",
+      "source_repository": "a-bonfim-tech/ai-saas-security-compliance-fit-gap-public",
+      "source_collected_at": "2026-08-21T18:38:20.314Z",
       "source_collector": "github-remote-evidence-collector"
     }
   },
@@ -279,11 +279,11 @@
     "key": "repository_visibility_reviewed",
     "present": true,
     "source": "gh repo view --json visibility,isPrivate",
-    "notes": "Repository visibility detected as PRIVATE. Private: true.",
+    "notes": "Repository visibility detected as PRIVATE. Private: true. | Updated by remote collector: Repository visibility detected as PUBLIC. Private: false.",
     "provenance": {
       "assessment_repository": "a-bonfim-tech/ai-saas-security-compliance-fit-gap-public",
-      "source_repository": "a-bonfim-tech/ai-saas-security-compliance-fit-gap",
-      "source_collected_at": "2026-05-24T04:13:57.734Z",
+      "source_repository": "a-bonfim-tech/ai-saas-security-compliance-fit-gap-public",
+      "source_collected_at": "2026-08-21T18:38:20.314Z",
       "source_collector": "github-remote-evidence-collector"
     }
   },
@@ -295,13 +295,13 @@
   },
   {
     "key": "secret_scanning_enabled",
-    "present": false,
-    "source": "gh api repos/a-bonfim-tech/ai-saas-security-compliance-fit-gap",
-    "notes": "Secret scanning status could not be determined.",
+    "present": true,
+    "source": "gh api repos/a-bonfim-tech/ai-saas-security-compliance-fit-gap-public",
+    "notes": "Secret scanning status could not be determined. | Updated by remote collector: Secret scanning status: enabled.",
     "provenance": {
       "assessment_repository": "a-bonfim-tech/ai-saas-security-compliance-fit-gap-public",
-      "source_repository": "a-bonfim-tech/ai-saas-security-compliance-fit-gap",
-      "source_collected_at": "2026-05-24T04:13:57.734Z",
+      "source_repository": "a-bonfim-tech/ai-saas-security-compliance-fit-gap-public",
+      "source_collected_at": "2026-08-21T18:38:20.314Z",
       "source_collector": "github-remote-evidence-collector"
     }
   },
@@ -332,12 +332,12 @@
   {
     "key": "status_checks_required",
     "present": false,
-    "source": "gh api repos/a-bonfim-tech/ai-saas-security-compliance-fit-gap/branches/main/protection",
+    "source": "gh api repos/a-bonfim-tech/ai-saas-security-compliance-fit-gap-public/branches/main/protection",
     "notes": "Required status checks could not be confirmed.",
     "provenance": {
       "assessment_repository": "a-bonfim-tech/ai-saas-security-compliance-fit-gap-public",
-      "source_repository": "a-bonfim-tech/ai-saas-security-compliance-fit-gap",
-      "source_collected_at": "2026-05-24T04:13:57.734Z",
+      "source_repository": "a-bonfim-tech/ai-saas-security-compliance-fit-gap-public",
+      "source_collected_at": "2026-08-21T18:38:20.314Z",
       "source_collector": "github-remote-evidence-collector"
     }
   },

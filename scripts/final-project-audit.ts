@@ -249,7 +249,7 @@ export function evaluateEvidenceInvariants(
 ): AuditCheck {
   const supportingKeys = new Set(claims.flatMap(claim => claim.foundEvidence));
   const unsupported = evidence.filter(item => supportingKeys.has(item.key) && !isPromotableEvidence(item, {
-    expectedContext: item.external_target ? expectedContexts[item.key] : undefined
+    expectedContext: expectedContexts[item.key]
   }).valid);
   const contradictoryClaims = claims.filter(claim => claim.status === "Evidence Sufficient" && claim.foundEvidence.length === 0);
   const passed = unsupported.length === 0 && contradictoryClaims.length === 0;

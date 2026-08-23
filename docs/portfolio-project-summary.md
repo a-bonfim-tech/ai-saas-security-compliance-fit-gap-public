@@ -38,14 +38,15 @@ Framework -> Requirement -> Control -> Evidence -> Status -> Gap -> Risk -> Reco
 
 - Total controls assessed: 14
 - Evidence-sufficient controls: 1
-- Evidence-partial controls: 3
-- Evidence gaps: 10
-- High-risk findings: 7
-- Medium-risk findings: 6
+- Evidence-partial controls: 2
+- Evidence gaps: 11
+- High-risk findings: 8
+- Medium-risk findings: 5
 - Low-risk findings: 1
 
 ## High-Risk Findings
 
+- IAM-001 (Identity and Access Management): Access to systems is controlled using least privilege
 - LOG-001 (Logging and Monitoring): Security-relevant events are logged and monitored
 - PRIV-001 (Privacy and Data Protection): Personal data processing is documented and controlled
 - AI-001 (AI Governance): AI system purpose, data flow and risks are documented
@@ -56,6 +57,7 @@ Framework -> Requirement -> Control -> Evidence -> Status -> Gap -> Risk -> Reco
 
 ## Open Gaps
 
+- IAM-001 (Identity and Access Management): Access to systems is controlled using least privilege
 - LOG-001 (Logging and Monitoring): Security-relevant events are logged and monitored
 - PRIV-001 (Privacy and Data Protection): Personal data processing is documented and controlled
 - AI-001 (AI Governance): AI system purpose, data flow and risks are documented

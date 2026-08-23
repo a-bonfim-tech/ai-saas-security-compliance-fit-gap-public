@@ -19,6 +19,7 @@ This report adds a simple numeric risk score to each fit-gap finding. The score 
 
 | Score | Control | Domain | Status | Risk | Missing Evidence |
 |---|---|---|---|---|---|
+| 100 | IAM-001 | Identity and Access Management | Evidence Gap | High | 3 |
 | 100 | LOG-001 | Logging and Monitoring | Evidence Gap | High | 3 |
 | 100 | PRIV-001 | Privacy and Data Protection | Evidence Gap | High | 3 |
 | 100 | AI-001 | AI Governance | Evidence Gap | High | 4 |
@@ -29,7 +30,6 @@ This report adds a simple numeric risk score to each fit-gap finding. The score 
 | 76 | APP-001 | Application Security | Evidence Gap | Medium | 2 |
 | 76 | APP-002 | Application Security | Evidence Gap | Medium | 2 |
 | 76 | APP-003 | Application Security | Evidence Gap | Medium | 2 |
-| 66 | IAM-001 | Identity and Access Management | Evidence Partial | Medium | 2 |
 | 63 | GOV-001 | Governance | Evidence Partial | Medium | 1 |
 | 63 | SDLC-001 | Secure Software Development | Evidence Partial | Medium | 1 |
 | 25 | VULN-001 | Vulnerability Management | Evidence Sufficient | Low | 0 |

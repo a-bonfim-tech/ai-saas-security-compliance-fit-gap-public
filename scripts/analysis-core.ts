@@ -84,7 +84,7 @@ export function assessControl(
 ): Finding {
   const foundEvidence = control.expectedEvidence.filter(expected =>
     evidence.some(item => item.key === expected && isPromotableEvidence(item, {
-      expectedContext: item.external_target ? expectedContexts[item.key] : undefined
+      expectedContext: expectedContexts[item.key]
     }).valid)
   );
 

@@ -1,5 +1,20 @@
 [
   {
+    "controlId": "IAM-001",
+    "domain": "Identity and Access Management",
+    "title": "Access to systems is controlled using least privilege",
+    "status": "Evidence Gap",
+    "risk": "High",
+    "score": 100,
+    "missingEvidenceCount": 3,
+    "missingEvidence": [
+      "mfa_enabled",
+      "rbac_defined",
+      "privileged_access_reviewed"
+    ],
+    "recommendation": "Implement or document the following missing evidence: mfa_enabled, rbac_defined, privileged_access_reviewed."
+  },
+  {
     "controlId": "LOG-001",
     "domain": "Logging and Monitoring",
     "title": "Security-relevant events are logged and monitored",
@@ -144,20 +159,6 @@
       "rate_limiting_reviewed"
     ],
     "recommendation": "Implement or document the following missing evidence: secrets_management_documented, rate_limiting_reviewed."
-  },
-  {
-    "controlId": "IAM-001",
-    "domain": "Identity and Access Management",
-    "title": "Access to systems is controlled using least privilege",
-    "status": "Evidence Partial",
-    "risk": "Medium",
-    "score": 66,
-    "missingEvidenceCount": 2,
-    "missingEvidence": [
-      "rbac_defined",
-      "privileged_access_reviewed"
-    ],
-    "recommendation": "Implement or document the following missing evidence: rbac_defined, privileged_access_reviewed."
   },
   {
     "controlId": "GOV-001",

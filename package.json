@@ -57,18 +57,20 @@
   ],
   "author": "a-bonfim-tech",
   "license": "ISC",
+  "packageManager": "pnpm@11.8.0",
   "devEngines": {
     "packageManager": {
       "name": "pnpm",
-      "version": "11.2.2",
+      "version": "11.8.0",
       "onFail": "download"
     }
   },
   "type": "module",
   "devDependencies": {
     "@types/node": "^25.9.1",
+    "ajv": "8.18.0",
     "tsx": "^4.22.3",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.7"
+    "vitest": "^4.1.11"
   }
 }

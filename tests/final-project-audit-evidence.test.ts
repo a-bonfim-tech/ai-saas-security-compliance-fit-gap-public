@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { evaluateEvidenceInvariants } from "../scripts/final-project-audit";
 
 describe("final audit evidence invariants", () => {
-  const stale = { key: "runtime", present: true, source: "provider-api", status: "unverified", external_target: { provider: "aws" as const, scopeId: "123456789012", productBindingSignals: ["product:guardian", "environment:production"] }, collected_at: "2020-01-01T00:00:00Z" };
+  const stale = { key: "runtime", present: true, source: "provider-api", notes: "synthetic stale fixture", status: "unverified", external_target: { provider: "aws" as const, scopeId: "123456789012", productBindingSignals: ["product:guardian", "environment:production"] }, collected_at: "2020-01-01T00:00:00Z" };
 
   it.each(["unverified", "superseded", "stale", "expired"])("allows persisted %s evidence when it supports no control", status => {
     expect(evaluateEvidenceInvariants([{ ...stale, status }], [{ status: "Evidence Gap", foundEvidence: [] }]).passed).toBe(true);
@@ -17,7 +17,7 @@ describe("final audit evidence invariants", () => {
   });
 
   it("allows valid promotable evidence to support a control", () => {
-    const evidence = { key: "review", present: true, source: "manual/security-review", status: "observed", notes: "reviewed" };
-    expect(evaluateEvidenceInvariants([evidence], [{ status: "Evidence Sufficient", foundEvidence: ["review"] }]).passed).toBe(true);
+    const evidence = { key: "risk_management_process_defined", present: true, source: "manual/security-review", status: "observed", notes: "reviewed" };
+    expect(evaluateEvidenceInvariants([evidence], [{ status: "Evidence Sufficient", foundEvidence: ["risk_management_process_defined"] }]).passed).toBe(true);
   });
 });

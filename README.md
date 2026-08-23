@@ -11,7 +11,7 @@ The repository translates security, privacy and AI governance requirements into 
 3. Review the [NIST SSDF crosswalk](docs/standards/nist-ssdf-crosswalk.md) and [ISO/IEC 25010 assessment](docs/quality/iso-25010-assessment.md).
 4. Reproduce the automated checks using `pnpm validate` and `pnpm security:scan`.
 
-Security highlights include fail-closed evidence promotion against caller-supplied authoritative context, freshness and replay checks, bounded secret scanning with explicit partial-coverage reporting, immutable CI dependencies, limited lexical workflow-policy checks and deterministic worktree-local integrity manifests.
+Security highlights include fail-closed runtime evidence validation driven by authoritative per-key requirement metadata, strict primitive and status validation independent of JSON Schema, caller-supplied authoritative context explicitly bound to the external evidence key, freshness and replay checks, bounded secret scanning with explicit partial-coverage reporting, immutable CI dependencies, limited lexical workflow-policy checks and deterministic worktree-local integrity manifests.
 
 ## Problem Statement
 
@@ -138,7 +138,7 @@ The current TypeScript analysis engine can:
 20. Generate a final project audit report.
 21. Generate maintenance and GitHub publication-readiness reports.
 22. Reject placeholder, reserved-domain and provider-incompatible external targets.
-23. Require correlated product binding, authoritative expected context, verification method and three-way SHA-256 agreement between the received payload, its declared digest and an independently supplied expected digest before external evidence can promote a control. Self-declared metadata alone is never promotable.
+23. Classify known evidence keys centrally as documentary, repository or external operational; unknown keys fail closed. Runtime promotion validates security-significant shapes and a positive status allowlist without depending on JSON Schema execution. External operational keys require a target, correlated product binding, authoritative expected context explicitly bound to the evidence key, verification method and three-way SHA-256 agreement between the received payload, its declared digest and an independently supplied expected digest before promotion. The input cannot select its own requirement or derive its expected context.
 
 ## Security and Repository Controls
 

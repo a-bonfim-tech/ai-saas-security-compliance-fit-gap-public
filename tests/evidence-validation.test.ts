@@ -21,6 +21,42 @@ const awsTarget = (overrides: Partial<ExternalTarget> = {}): ExternalTarget => (
   ...overrides
 });
 
+function completeExternalFixture(key = "cloud_audit_logs_enabled") {
+  const target = awsTarget();
+  const payload = `synthetic-payload:${key}`;
+  const digest = buildEvidencePayloadDigest(payload);
+  const bindingDigest = buildTargetBindingDigest(target, "production");
+  return {
+    evidence: {
+      key,
+      present: true,
+      source: "provider-api",
+      notes: "synthetic external fixture; not operational evidence",
+      status: "observed",
+      verification_method: "read-only provider API fixture",
+      integrity: { algorithm: "sha256", digest },
+      integrity_payload: payload,
+      external_target: target,
+      collected_at: "2026-08-23T08:00:00Z",
+      environment: "production",
+      collector_version: "1.0.0",
+      collection_context_id: `context:${key}`,
+      target_fingerprint: "aws:123456789012:guardian",
+      binding_digest: bindingDigest
+    },
+    expectedContext: {
+      evidenceKey: key,
+      collectionContextId: `context:${key}`,
+      provider: "aws" as const,
+      environment: "production",
+      targetFingerprint: "aws:123456789012:guardian",
+      bindingDigest,
+      collectorVersion: "1.0.0",
+      expectedPayloadDigest: digest
+    }
+  };
+}
+
 describe("external evidence validation", () => {
   it.each(["", "REAL", "VALOR_REAL", "OWNER_OU_EQUIPE_REAL", "service-demo", "TBD", "N/A"])(
     "rejects artificial value %j", value => expect(isArtificialValue(value)).toBe(true)
@@ -52,8 +88,9 @@ describe("external evidence validation", () => {
   });
 
   it("does not promote documentation or unverified external evidence", () => {
-    expect(isPromotableEvidence({ present: true, source: "README.md", status: "documented" }).valid).toBe(false);
+    expect(isPromotableEvidence({ key: "security_policy_exists", present: true, source: "README.md", status: "documented" }).valid).toBe(false);
     expect(isPromotableEvidence({
+      key: "cloud_audit_logs_enabled",
       present: true,
       source: "cloud-provider/audit-logs",
       status: "unverified",
@@ -68,8 +105,10 @@ describe("external evidence validation", () => {
     const authoritativeExpectedDigest = buildEvidencePayloadDigest(payload);
     const bindingDigest = buildTargetBindingDigest(target, environment);
     const evidence = {
+      key: "cloud_audit_logs_enabled",
       present: true,
       source: "evidence/runtime/audit-export.json",
+      notes: "synthetic complete external fixture",
       status: "observed",
       verification_method: "read-only provider API export correlated to product and environment",
       integrity: { algorithm: "sha256", digest: authoritativeExpectedDigest },
@@ -83,7 +122,7 @@ describe("external evidence validation", () => {
       binding_digest: bindingDigest,
       repository_commit_sha: "a".repeat(40)
     };
-    const expectedContext = { collectionContextId: "collection-20260823-01", provider: "aws" as const, environment, targetFingerprint: "aws:123456789012:guardian", bindingDigest, collectorVersion: "1.0.0", expectedPayloadDigest: authoritativeExpectedDigest, repositoryCommitSha: "a".repeat(40) };
+    const expectedContext = { evidenceKey: "cloud_audit_logs_enabled", collectionContextId: "collection-20260823-01", provider: "aws" as const, environment, targetFingerprint: "aws:123456789012:guardian", bindingDigest, collectorVersion: "1.0.0", expectedPayloadDigest: authoritativeExpectedDigest, repositoryCommitSha: "a".repeat(40) };
     expect(isPromotableEvidence(evidence, { now: new Date("2026-08-23T09:00:00Z"), expectedContext }).valid).toBe(true);
     expect(isPromotableEvidence(evidence, { now: new Date("2026-08-23T09:00:00Z") }).reasons).toContain("context_not_provided");
     expect(isPromotableEvidence({ ...evidence, status: undefined }, { now: new Date("2026-08-23T09:00:00Z"), expectedContext }).reasons).toContain("missing_status");
@@ -133,8 +172,10 @@ describe("external evidence validation", () => {
   it("rejects replay into a different environment, provider, target or context", () => {
     const target = awsTarget();
     const evidence = {
+      key: "cloud_audit_logs_enabled",
       present: true,
       source: "provider-api",
+      notes: "synthetic replay fixture",
       external_target: target,
       environment: "production",
       collector_version: "1.0.0",
@@ -144,6 +185,7 @@ describe("external evidence validation", () => {
       repository_commit_sha: "a".repeat(40)
     };
     expect(validateCollectionContext(evidence, {
+      evidenceKey: "cloud_audit_logs_enabled",
       collectionContextId: "context-b",
       provider: "azure",
       environment: "staging",
@@ -161,8 +203,10 @@ describe("external evidence validation", () => {
   it("rejects a replayed binding digest after target mutation", () => {
     const original = awsTarget();
     expect(validateCollectionContext({
+      key: "cloud_audit_logs_enabled",
       present: true,
       source: "provider-api",
+      notes: "synthetic target-mutation fixture",
       external_target: awsTarget({ scopeId: "999999999999" }),
       environment: "production",
       collector_version: "1.0.0",
@@ -170,6 +214,7 @@ describe("external evidence validation", () => {
       target_fingerprint: "fingerprint-a",
       binding_digest: buildTargetBindingDigest(original, "production")
     }, {
+      evidenceKey: "cloud_audit_logs_enabled",
       collectionContextId: "context-a",
       provider: "aws",
       environment: "production",
@@ -178,5 +223,192 @@ describe("external evidence validation", () => {
       collectorVersion: "1.0.0",
       expectedPayloadDigest: "a".repeat(64)
     }).reasons).toContain("expected_binding_digest_invalid");
+  });
+
+  it("fails closed for unknown evidence requirements", () => {
+    expect(isPromotableEvidence({
+      key: "attacker_selected_unknown_key",
+      present: true,
+      source: "README.md",
+      status: "implemented"
+    }).reasons).toContain("unknown_evidence_requirement");
+  });
+
+  it("keeps known documentary and repository evidence legitimate without cloud targets", () => {
+    expect(isPromotableEvidence({
+      key: "risk_management_process_defined",
+      present: true,
+      source: "docs/risk-management.md",
+      notes: "synthetic documentary fixture",
+      status: "implemented"
+    }).valid).toBe(true);
+    expect(isPromotableEvidence({
+      key: "codeowners_configured",
+      present: true,
+      source: ".github/CODEOWNERS",
+      notes: "synthetic repository fixture",
+      status: "implemented"
+    }).valid).toBe(true);
+    for (const external_target of [null, false, 0, ""]) {
+      expect(isPromotableEvidence({
+        key: "codeowners_configured",
+        present: true,
+        source: ".github/CODEOWNERS",
+        notes: "synthetic mixed-shape fixture",
+        external_target
+      }).reasons).toContain("external_target_not_allowed");
+    }
+  });
+
+  it("denies the external operational negative matrix and accepts the complete positive case", () => {
+    const target = awsTarget();
+    const payload = '{"providerEvent":"confirmed"}';
+    const payloadDigest = buildEvidencePayloadDigest(payload);
+    const bindingDigest = buildTargetBindingDigest(target, "production");
+    const expectedContext = {
+      evidenceKey: "cloud_audit_logs_enabled",
+      collectionContextId: "context-a",
+      provider: "aws" as const,
+      environment: "production",
+      targetFingerprint: "aws:123456789012:guardian",
+      bindingDigest,
+      collectorVersion: "1.0.0",
+      expectedPayloadDigest: payloadDigest
+    };
+    const complete = {
+      key: "cloud_audit_logs_enabled",
+      present: true,
+      source: "provider-api",
+      notes: "synthetic negative-matrix fixture",
+      status: "observed",
+      verification_method: "read-only provider API export",
+      integrity: { algorithm: "sha256", digest: payloadDigest },
+      integrity_payload: payload,
+      external_target: target,
+      collected_at: "2026-08-23T08:00:00Z",
+      environment: "production",
+      collector_version: "1.0.0",
+      collection_context_id: "context-a",
+      target_fingerprint: "aws:123456789012:guardian",
+      binding_digest: bindingDigest
+    };
+    const check = (candidate: typeof complete | Record<string, unknown>, context?: typeof expectedContext) =>
+      isPromotableEvidence(candidate as typeof complete, { now: new Date("2026-08-23T09:00:00Z"), expectedContext: context });
+    const attackerPayload = '{"providerEvent":"substituted"}';
+
+    const negativeCases: Array<[string, Record<string, unknown>]> = [
+      ["missing target", { ...complete, external_target: undefined }],
+      ["empty target", { ...complete, external_target: {} }],
+      ["placeholder target", { ...complete, external_target: awsTarget({ scopeId: "PLACEHOLDER" }) }],
+      ["missing expected context", complete],
+      ["missing expected digest", complete],
+      ["expected digest mismatch", complete],
+      ["payload and declared digest replaced together", { ...complete, integrity_payload: attackerPayload, integrity: { algorithm: "sha256", digest: buildEvidencePayloadDigest(attackerPayload) } }],
+      ["provider mismatch", complete],
+      ["environment mismatch", complete],
+      ["target fingerprint mismatch", complete],
+      ["stale", { ...complete, collected_at: "2026-08-21T08:00:00Z" }],
+      ["expired", { ...complete, collected_at: "2026-08-01T08:00:00Z" }],
+      ["clock skew", { ...complete, collected_at: "2026-08-23T10:00:00Z" }],
+      ["insufficient binding", { ...complete, external_target: awsTarget({ productBindingSignals: ["product:guardian"] }) }],
+      ["missing verification method", { ...complete, verification_method: undefined }],
+      ["wrong integrity algorithm", { ...complete, integrity: { algorithm: "md5", digest: payloadDigest } }],
+      ["malformed declared digest", { ...complete, integrity: { algorithm: "sha256", digest: "bad" } }],
+      ["non-promotable status", { ...complete, status: "unverified" }]
+    ];
+    const contexts = [
+      expectedContext,
+      expectedContext,
+      expectedContext,
+      undefined,
+      { ...expectedContext, expectedPayloadDigest: undefined },
+      { ...expectedContext, expectedPayloadDigest: "b".repeat(64) },
+      expectedContext,
+      { ...expectedContext, provider: "azure" as const },
+      { ...expectedContext, environment: "staging" },
+      { ...expectedContext, targetFingerprint: "different" },
+      expectedContext,
+      expectedContext,
+      expectedContext,
+      expectedContext,
+      expectedContext,
+      expectedContext,
+      expectedContext,
+      expectedContext
+    ] as const;
+
+    negativeCases.forEach(([label, candidate], index) => {
+      expect(check(candidate, contexts[index] as typeof expectedContext), label).toMatchObject({ valid: false });
+    });
+    expect(check(complete, expectedContext)).toEqual({ valid: true, reasons: [] });
+  });
+
+  it.each([
+    ["false string", "false"], ["true string", "true"], ["one", 1], ["zero", 0],
+    ["null", null], ["array", []], ["object", {}], ["undefined", undefined]
+  ])("rejects non-boolean present: %s", (_label, present) => {
+    expect(isPromotableEvidence({
+      key: "security_policy_exists",
+      present,
+      source: "SECURITY.md",
+      notes: "synthetic primitive fixture"
+    })).toMatchObject({ valid: false, reasons: expect.arrayContaining(["invalid_present_type"]) });
+  });
+
+  it("enforces the runtime status allowlist and primitive contract without schema", () => {
+    const { evidence, expectedContext } = completeExternalFixture();
+    for (const status of ["attacker_defined", "", null, [], {}]) {
+      expect(isPromotableEvidence({ ...evidence, status }, {
+        now: new Date("2026-08-23T09:00:00Z"), expectedContext
+      })).toMatchObject({ valid: false, reasons: expect.arrayContaining(["invalid_status"]) });
+    }
+    for (const status of ["documented", "unavailable", "not_applicable", "unverified"]) {
+      expect(isPromotableEvidence({ ...evidence, status }, {
+        now: new Date("2026-08-23T09:00:00Z"), expectedContext
+      }).valid).toBe(false);
+    }
+    expect(isPromotableEvidence({ ...evidence, source: [] }, {
+      now: new Date("2026-08-23T09:00:00Z"), expectedContext
+    }).reasons).toContain("invalid_source_type");
+    expect(isPromotableEvidence({ ...evidence, notes: {} }, {
+      now: new Date("2026-08-23T09:00:00Z"), expectedContext
+    }).reasons).toContain("invalid_notes_type");
+    expect(isPromotableEvidence(evidence, {
+      now: new Date("2026-08-23T09:00:00Z"), expectedContext
+    }).valid).toBe(true);
+  });
+
+  it("binds authoritative context and digest to the expected evidence key", () => {
+    const cloud = completeExternalFixture("cloud_audit_logs_enabled");
+    const application = completeExternalFixture("application_logs_enabled");
+    const sameContextDifferentKey = {
+      ...cloud.expectedContext,
+      evidenceKey: "application_logs_enabled"
+    };
+    expect(isPromotableEvidence(cloud.evidence, {
+      now: new Date("2026-08-23T09:00:00Z"), expectedContext: sameContextDifferentKey
+    }).reasons).toContain("expected_evidence_key_mismatch");
+
+    const missingKey = { ...cloud.expectedContext, evidenceKey: undefined } as unknown as typeof cloud.expectedContext;
+    expect(isPromotableEvidence(cloud.evidence, {
+      now: new Date("2026-08-23T09:00:00Z"), expectedContext: missingKey
+    }).reasons).toContain("expected_evidence_key_missing");
+
+    const unknownKey = { ...cloud.expectedContext, evidenceKey: "unknown_external_key" };
+    expect(isPromotableEvidence(cloud.evidence, {
+      now: new Date("2026-08-23T09:00:00Z"), expectedContext: unknownKey
+    }).reasons).toContain("expected_evidence_key_unknown");
+
+    const replaced = {
+      ...cloud.evidence,
+      key: "application_logs_enabled",
+      integrity_payload: application.evidence.integrity_payload,
+      integrity: application.evidence.integrity
+    };
+    expect(isPromotableEvidence(replaced, {
+      now: new Date("2026-08-23T09:00:00Z"), expectedContext: cloud.expectedContext
+    }).reasons).toEqual(expect.arrayContaining([
+      "expected_evidence_key_mismatch", "expected_payload_digest_mismatch"
+    ]));
   });
 });

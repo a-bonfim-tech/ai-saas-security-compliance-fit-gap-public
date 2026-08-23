@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-08-23T09:23:15.937Z",
+  "generatedAt": "2026-08-23T11:40:43.126Z",
   "methodology": "Framework -> Requirement -> Control -> Evidence -> Status -> Gap -> Risk -> Recommendation -> Roadmap",
   "summary": {
     "totalControls": 14,
     "evidenceSufficient": 1,
-    "evidencePartial": 3,
-    "evidenceGaps": 10,
-    "highRiskFindings": 7,
-    "mediumRiskFindings": 6,
+    "evidencePartial": 2,
+    "evidenceGaps": 11,
+    "highRiskFindings": 8,
+    "mediumRiskFindings": 5,
     "lowRiskFindings": 1
   },
   "findings": [
@@ -41,16 +41,15 @@
         "SOC 2",
         "GDPR"
       ],
-      "status": "Evidence Partial",
-      "risk": "Medium",
-      "foundEvidence": [
-        "mfa_enabled"
-      ],
+      "status": "Evidence Gap",
+      "risk": "High",
+      "foundEvidence": [],
       "missingEvidence": [
+        "mfa_enabled",
         "rbac_defined",
         "privileged_access_reviewed"
       ],
-      "recommendation": "Implement or document the following missing evidence: rbac_defined, privileged_access_reviewed."
+      "recommendation": "Implement or document the following missing evidence: mfa_enabled, rbac_defined, privileged_access_reviewed."
     },
     {
       "controlId": "SDLC-001",

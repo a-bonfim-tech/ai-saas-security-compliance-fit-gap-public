@@ -33,16 +33,16 @@ Trust boundaries are: external provider to collector; repository input to parser
 
 | Threat | STRIDE | Attack path | Implemented mitigation | Residual risk / status |
 |---|---|---|---|---|
-| Malicious or poisoned evidence | Tampering / Spoofing | Crafted source, scope or notes promotes a control | `evidence-validation.ts`; negative tests | Schema coverage of legacy records remains partial / open |
+| Malicious or poisoned evidence | Tampering / Spoofing | Crafted primitive shape, status, source, scope, key or notes promotes a control | Authoritative per-key requirements; strict runtime shape/status validation independent of JSON Schema; parity and negative tests | Legacy records not referenced by the control catalog are retained but cannot promote unknown keys / bounded |
 | Placeholder target accepted | Spoofing | Synthetic account, URL or service ID appears real | Reserved-token, URL, domain, provider and binding validation | Semantic ownership still requires human or provider evidence / open |
-| Evidence tampering or staleness | Tampering | Old or edited export is reused | SHA-256 metadata required for external promotion | Timestamp freshness policy not yet enforced / open |
-| Path or symlink traversal | Tampering / Elevation | Crafted path escapes evidence root | No general user-selected ingestion path currently exists | Must be implemented before adding arbitrary path ingestion / accepted boundary |
+| Evidence tampering or staleness | Tampering | Old, edited or cross-key export is reused | Three-way SHA-256 validation, expected-context evidence-key binding and freshness policy enforced for external operational promotion; negative tests | Unsigned collector identity and authoritative-digest distribution remain external concerns / open |
+| Path or symlink traversal | Tampering / Elevation | Crafted path escapes evidence root | Repository-local JSON ingestion uses bounded regular-file reads and rejects symlinks, oversized, binary and malformed input | Ingestion is limited to an enumerated repository-local file set; arbitrary external paths remain unsupported / bounded |
 | Command or shell injection | Elevation | Untrusted metadata reaches a shell | `execFileSync` with argument arrays in collectors | GitHub CLI output remains untrusted input / monitored |
-| JSON/CSV/Markdown injection | Tampering | Data changes report structure or spreadsheet behavior | JSON parsing; CSV quoting; Markdown table escaping | CSV formula-prefix neutralization is not yet implemented / open |
+| JSON/CSV/Markdown injection | Tampering | Data changes report structure or spreadsheet behavior | JSON parsing; CSV quoting and formula-prefix neutralization; Markdown table escaping; tests | Other downstream renderers may require context-specific encoding / open |
 | Compromised dependency/action | Elevation | Supply-chain component runs in CI | lockfile, frozen install, full Action SHAs, Dependabot, dependency review | Registry/provenance verification depends on external services / unverified |
 | Token over-privilege | Elevation / Disclosure | Workflow token modifies repository or leaks data | read-only defaults; scoped CodeQL write permission; checkout credentials disabled | Repository settings require remote evidence / unverified |
 | Accidental secret publication | Information disclosure | Credential appears in source, fixture, log or report | local scanner and GitHub secret controls | Local regex scanner is not exhaustive / open |
-| False-positive promotion | Tampering | Documentation becomes observed control | fail-closed promotability rules | Legacy simple evidence remains lower assurance / open |
+| False-positive promotion | Tampering | Documentation or a self-selected discriminator becomes observed control | Authoritative per-key requirement metadata, unknown-key denial and fail-closed promotability tests | Classification metadata requires maintainer review when the catalog changes / open |
 | False-negative suppression | Repudiation | Malformed input or unavailable API is treated as pass | explicit gaps and warnings; tests | Remote error taxonomy requires further strengthening / open |
 | CI bypass or malicious PR | Elevation | Unsafe workflow expression or missing required check | pinned actions, read-only permissions, PR workflows | Branch/ruleset state is external and must be re-collected / unverified |
 | Unauthorized publication | Information disclosure | Private provenance or secrets enter public output | publication and secret gates | Human release authorization remains required / open |
@@ -52,7 +52,8 @@ Trust boundaries are: external provider to collector; repository input to parser
 1. `UNVERIFIED` cannot become sufficient without new promotable evidence.
 2. Documentation cannot prove runtime effectiveness.
 3. Provider presence cannot prove product binding.
-4. External evidence requires a compatible target, two distinct binding signals, a verification method and integrity metadata.
-5. API inaccessibility is `UNVERIFIED` or `UNAVAILABLE`, never automatic `PASS` or confirmed `FAIL`.
+4. Evidence requirements come from central metadata keyed by the expected evidence key; unknown requirements fail closed.
+5. External operational evidence requires a compatible target, two distinct binding signals, freshness, a verification method, SHA-256 integrity metadata and independently supplied expected context bound to the evidence key and payload digest.
+6. API inaccessibility is `UNVERIFIED` or `UNAVAILABLE`, never automatic `PASS` or confirmed `FAIL`.
 
 Owner: repository maintainer. Status: Proposta. Review when ingestion paths, providers or publication automation change.

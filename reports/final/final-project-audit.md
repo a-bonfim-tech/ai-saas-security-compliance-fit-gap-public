@@ -1,6 +1,6 @@
 # Final Project Audit Report
 
-Generated at: 2026-08-23T10:29:15.227Z
+Generated at: 2026-08-23T11:43:00.823Z
 
 ## Summary
 
@@ -20,7 +20,7 @@ Generated at: 2026-08-23T10:29:15.227Z
 | Evidence | Evidence register | PASS | Evidence items: 51. Present: 20. Missing/false: 31. |
 | Automation | Package scripts | PASS | All required scripts exist. |
 | Evidence | Presence, promotion and control-support separation | PASS | Persisted non-promotable evidence does not support controls, and sufficient claims have supporting evidence. |
-| Release | Worktree-local artifact integrity | PASS | Unsigned worktree-local SHA-256 manifest is internally consistent with its base commit. |
+| Release | Worktree-local artifact integrity | PASS | Transient worktree manifest is not present. Generate it locally before requesting an integrity comparison; absence makes no release-provenance claim. |
 | CI/CD | Workflow security policy | PASS | Immutable references, checkout safety, triggers and permissions passed. |
 | Documentation | Security traceability links | PASS | Threat, standards, quality, traceability, case-study and decision artifacts exist. |
 | GitHub | Public-edition origin remote | PASS | Origin remote: https://github.com/a-bonfim-tech/ai-saas-security-compliance-fit-gap-public.git |

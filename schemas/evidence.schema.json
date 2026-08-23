@@ -76,6 +76,38 @@
         "additionalProperties": false
       }
     },
-    "additionalProperties": false
+    "additionalProperties": false,
+    "allOf": [
+      {
+        "if": {
+          "properties": {
+            "key": {
+              "enum": [
+                "application_logs_enabled",
+                "cloud_audit_logs_enabled",
+                "mfa_enabled",
+                "privileged_access_reviewed"
+              ]
+            }
+          },
+          "required": ["key"]
+        },
+        "then": {
+          "required": [
+            "external_target",
+            "status",
+            "verification_method",
+            "integrity",
+            "integrity_payload",
+            "collected_at",
+            "collector_version",
+            "environment",
+            "collection_context_id",
+            "target_fingerprint",
+            "binding_digest"
+          ]
+        }
+      }
+    ]
   }
 }

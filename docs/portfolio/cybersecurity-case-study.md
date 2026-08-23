@@ -30,7 +30,7 @@ The repository demonstrates assessment engineering, not production control effec
 
 ## Lessons learned and production extension
 
-Evidence presence is weaker than evidence quality. In production, add authenticated read-only provider collectors, freshness rules, signed evidence manifests, isolated parsers, bounded file ingestion, independent review, release provenance and a documented vulnerability-response lifecycle.
+Evidence presence is weaker than evidence quality. This repository implements freshness rules and bounded repository-local JSON ingestion, but production use would still require authenticated read-only provider collectors, signed evidence manifests, isolated parsers, independent review, release provenance and a documented vulnerability-response lifecycle.
 
 ## Interview discussion
 
@@ -38,7 +38,7 @@ The hardest decision was preserving `UNVERIFIED` even when that lowers an appare
 
 The most important trade-off is strictness versus operability. A fail-closed gate can reject incomplete but legitimate evidence; the repository therefore preserves rejected or stale records for review while preventing them from changing control status.
 
-The review found a failure in the project's own design: `present: true` was previously sufficient for promotion. Centralized semantic validation removed that false-positive path. A second self-identified issue allowed the secret scanner to follow symlinks; it now uses bounded, regular-file-only traversal and masks detections.
+The review found that `present: true` could previously promote weak evidence, that an external operational key could omit `external_target`, that invalid runtime primitive/status values could bypass schema-only constraints, and that authoritative context was not bound to its evidence key. Runtime validation now enforces primitive shapes and a positive status allowlist independently of JSON Schema, while caller-supplied context explicitly identifies the authorized evidence key. Centralized per-key requirement metadata denies unknown keys and requires the full external validation path for keys classified as external operational; adversarial tests cover the observed bypasses. This narrows the demonstrated false-positive paths but does not prove that no other path exists. A separate self-identified issue allowed the secret scanner to follow symlinks; it now uses bounded, regular-file-only traversal and masks detections.
 
 In production I would use short-lived read-only provider identities, signed collection contexts, freshness SLAs by evidence class, transparency logs or Sigstore attestations, isolated parsing workers, artifact provenance and independent control-owner approval. Remaining risks include unavailable runtime evidence, unverified external IAM/logging effectiveness and dependence on remote platform capabilities.
 

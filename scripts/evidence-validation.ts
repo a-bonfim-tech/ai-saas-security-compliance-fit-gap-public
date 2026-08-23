@@ -1,5 +1,6 @@
 import net from "node:net";
 import { createHash } from "node:crypto";
+import { getEvidenceRequirement } from "./evidence-requirements";
 
 export const PLACEHOLDER_TOKENS = new Set([
   "REAL", "EXAMPLE", "EXEMPLO", "PLACEHOLDER", "TEST", "DEMO", "SAMPLE",
@@ -39,6 +40,7 @@ export type FreshnessPolicy = {
 };
 
 export type ExpectedCollectionContext = {
+  evidenceKey: string;
   collectionContextId: string;
   provider: ExternalProvider;
   environment: string;
@@ -51,9 +53,10 @@ export type ExpectedCollectionContext = {
 };
 
 export type EvidenceLike = {
+  key?: string;
   present: boolean;
   source: string | null;
-  notes?: string;
+  notes: string;
   status?: string;
   verification_method?: string;
   integrity?: { algorithm: string; digest: string };
@@ -70,6 +73,19 @@ export type EvidenceLike = {
   binding_digest?: string;
   repository_commit_sha?: string;
 };
+
+export const PROMOTABLE_EVIDENCE_STATUSES = new Set([
+  "implemented", "tested", "observed", "operationally_proven"
+]);
+
+export const NON_PROMOTABLE_EVIDENCE_STATUSES = new Set([
+  "documented", "unavailable", "not_applicable", "unverified"
+]);
+
+const VALID_EVIDENCE_STATUSES = new Set([
+  ...PROMOTABLE_EVIDENCE_STATUSES,
+  ...NON_PROMOTABLE_EVIDENCE_STATUSES
+]);
 
 const DEFAULT_FRESHNESS_POLICY: FreshnessPolicy = {
   staleAfterSeconds: 24 * 60 * 60,
@@ -152,13 +168,21 @@ function providerScopeMatches(target: ExternalTarget): boolean {
 
 export function validateExternalTarget(target: ExternalTarget): ValidationResult {
   const reasons: string[] = [];
-  if (isArtificialValue(target.scopeId)) reasons.push("scope_id_is_artificial");
-  if (!providerScopeMatches(target)) reasons.push("provider_scope_mismatch");
-  if (target.endpoint && !isValidPublicHttpsUrl(target.endpoint)) reasons.push("invalid_endpoint");
-  if (target.provider === "aws" && target.region && !VALID_AWS_REGIONS.has(target.region)) {
+  if (!target || typeof target !== "object") return { valid: false, reasons: ["invalid_external_target"] };
+  const candidate = target as Partial<ExternalTarget>;
+  const providers: ExternalProvider[] = ["aws", "azure", "gcp", "vercel", "generic"];
+  if (!candidate.provider || !providers.includes(candidate.provider)) reasons.push("invalid_provider");
+  if (typeof candidate.scopeId !== "string" || isArtificialValue(candidate.scopeId)) reasons.push("scope_id_is_artificial");
+  if (candidate.provider && typeof candidate.scopeId === "string" && !providerScopeMatches(candidate as ExternalTarget)) {
+    reasons.push("provider_scope_mismatch");
+  }
+  if (candidate.endpoint !== undefined && (typeof candidate.endpoint !== "string" || !isValidPublicHttpsUrl(candidate.endpoint))) reasons.push("invalid_endpoint");
+  if (candidate.provider === "aws" && candidate.region !== undefined && (typeof candidate.region !== "string" || !VALID_AWS_REGIONS.has(candidate.region))) {
     reasons.push("invalid_aws_region");
   }
-  const signals = target.productBindingSignals.filter(signal => !isArtificialValue(signal));
+  const rawSignals = Array.isArray(candidate.productBindingSignals) ? candidate.productBindingSignals : [];
+  if (!Array.isArray(candidate.productBindingSignals)) reasons.push("missing_product_binding");
+  const signals = rawSignals.filter(signal => typeof signal === "string" && !isArtificialValue(signal));
   if (signals.length < 2) reasons.push("insufficient_product_binding");
   if (new Set(signals.map(signal => signal.toLowerCase())).size < 2) reasons.push("uncorrelated_product_binding");
   return { valid: reasons.length === 0, reasons };
@@ -228,6 +252,21 @@ export function validateCollectionContext(
   if (!evidence.binding_digest) reasons.push("missing_binding_digest");
 
   if (expected) {
+    if (typeof expected.evidenceKey !== "string" || !expected.evidenceKey) reasons.push("expected_evidence_key_missing");
+    else if (!getEvidenceRequirement(expected.evidenceKey)) reasons.push("expected_evidence_key_unknown");
+    else if (evidence.key !== expected.evidenceKey) reasons.push("expected_evidence_key_mismatch");
+    const providerValid = ["aws", "azure", "gcp", "vercel", "generic"].includes(expected.provider);
+    if (typeof expected.collectionContextId !== "string" || !expected.collectionContextId ||
+        !providerValid || typeof expected.environment !== "string" || !expected.environment ||
+        typeof expected.targetFingerprint !== "string" || !expected.targetFingerprint ||
+        typeof expected.bindingDigest !== "string" || !/^[a-f0-9]{64}$/i.test(expected.bindingDigest) ||
+        typeof expected.collectorVersion !== "string" || !expected.collectorVersion ||
+        typeof expected.expectedPayloadDigest !== "string" || !/^[a-f0-9]{64}$/i.test(expected.expectedPayloadDigest) ||
+        (expected.repositoryCommitSha !== undefined &&
+          (typeof expected.repositoryCommitSha !== "string" || !/^[a-f0-9]{40}$/i.test(expected.repositoryCommitSha)))) {
+      reasons.push("invalid_expected_context_shape");
+      return { valid: false, reasons: [...new Set(reasons)] };
+    }
     if (evidence.collection_context_id !== expected.collectionContextId) reasons.push("collection_context_mismatch");
     if (evidence.external_target.provider !== expected.provider) reasons.push("provider_context_mismatch");
     if (evidence.environment !== expected.environment) reasons.push("environment_context_mismatch");
@@ -244,46 +283,94 @@ export function validateCollectionContext(
 }
 
 export function isPromotableEvidence(
-  evidence: EvidenceLike,
+  input: unknown,
   options: { now?: Date; freshnessPolicy?: FreshnessPolicy; expectedContext?: ExpectedCollectionContext } = {}
 ): ValidationResult {
   const reasons: string[] = [];
-  if (!evidence.present) reasons.push("not_present");
-  const source = evidence.source?.trim() ?? "";
+  if (!input || typeof input !== "object" || Array.isArray(input)) {
+    return { valid: false, reasons: ["invalid_evidence_shape"] };
+  }
+  const evidence = input as Partial<EvidenceLike>;
+  if (typeof evidence.key !== "string" || !evidence.key.trim()) reasons.push("invalid_key_type");
+  const requirement = typeof evidence.key === "string" ? getEvidenceRequirement(evidence.key) : undefined;
+  if (!requirement) reasons.push("unknown_evidence_requirement");
+  if (typeof evidence.present !== "boolean") reasons.push("invalid_present_type");
+  else if (!evidence.present) reasons.push("not_present");
+  if (evidence.source !== null && typeof evidence.source !== "string") reasons.push("invalid_source_type");
+  const source = typeof evidence.source === "string" ? evidence.source.trim() : "";
   if (!source || PLACEHOLDER_TOKENS.has(source.normalize("NFKC").toUpperCase())) {
     reasons.push("invalid_source");
   }
-  if (evidence.status && ["documented", "unavailable", "not_applicable", "unverified"].includes(evidence.status.toLowerCase())) {
-    reasons.push("status_not_technical_evidence");
+  if (typeof evidence.notes !== "string") reasons.push("invalid_notes_type");
+  if (evidence.status !== undefined) {
+    if (typeof evidence.status !== "string" || !VALID_EVIDENCE_STATUSES.has(evidence.status)) {
+      reasons.push("invalid_status");
+    } else if (NON_PROMOTABLE_EVIDENCE_STATUSES.has(evidence.status)) {
+      reasons.push("status_not_technical_evidence");
+    }
   }
-  if (evidence.external_target) {
+  const hasExternalTarget = evidence.external_target !== undefined;
+  if (requirement === "external_operational" && !evidence.external_target) {
+    reasons.push("external_target_required");
+  }
+  if (requirement !== "external_operational" && hasExternalTarget) {
+    reasons.push("external_target_not_allowed");
+  }
+  if (requirement === "external_operational" && evidence.external_target) {
     if (!evidence.status) reasons.push("missing_status");
-    reasons.push(...validateExternalTarget(evidence.external_target).reasons);
-    if (!evidence.verification_method || isArtificialValue(evidence.verification_method)) {
+    else if (typeof evidence.status !== "string" || !PROMOTABLE_EVIDENCE_STATUSES.has(evidence.status)) {
+      reasons.push("status_not_promotable");
+    }
+    const targetValidation = validateExternalTarget(evidence.external_target);
+    reasons.push(...targetValidation.reasons);
+    if (typeof evidence.collected_at !== "string") reasons.push("invalid_collected_at_type");
+    if (evidence.valid_until !== undefined && typeof evidence.valid_until !== "string") reasons.push("invalid_valid_until_type");
+    if (evidence.max_age_seconds !== undefined && typeof evidence.max_age_seconds !== "number") reasons.push("invalid_max_age_type");
+    if (typeof evidence.environment !== "string" || !evidence.environment) reasons.push("invalid_environment_type");
+    if (typeof evidence.collector_version !== "string" || !evidence.collector_version) reasons.push("invalid_collector_version_type");
+    if (typeof evidence.collection_context_id !== "string" || !evidence.collection_context_id) reasons.push("invalid_collection_context_type");
+    if (typeof evidence.target_fingerprint !== "string" || !evidence.target_fingerprint) reasons.push("invalid_target_fingerprint_type");
+    if (typeof evidence.binding_digest !== "string" || !/^[a-f0-9]{64}$/i.test(evidence.binding_digest)) reasons.push("invalid_binding_digest_type");
+    if (evidence.repository_commit_sha !== undefined &&
+        (typeof evidence.repository_commit_sha !== "string" || !/^[a-f0-9]{40}$/i.test(evidence.repository_commit_sha))) {
+      reasons.push("invalid_repository_commit_type");
+    }
+    if (typeof evidence.verification_method !== "string" || isArtificialValue(evidence.verification_method)) {
       reasons.push("missing_verification_method");
     }
     // Payload and declared digest are untrusted evidence claims. The expected digest is caller-supplied.
-    const computedPayloadDigest = evidence.integrity_payload
+    const computedPayloadDigest = typeof evidence.integrity_payload === "string"
       ? buildEvidencePayloadDigest(evidence.integrity_payload)
       : undefined;
     const expectedPayloadDigest = options.expectedContext?.expectedPayloadDigest;
-    if (!evidence.integrity || evidence.integrity.algorithm !== "sha256" || !/^[a-f0-9]{64}$/i.test(evidence.integrity.digest)) {
+    if (!evidence.integrity || typeof evidence.integrity !== "object" ||
+        evidence.integrity.algorithm !== "sha256" || typeof evidence.integrity.digest !== "string" ||
+        !/^[a-f0-9]{64}$/i.test(evidence.integrity.digest)) {
       reasons.push("missing_integrity_metadata");
-    } else if (!evidence.integrity_payload) {
+    } else if (typeof evidence.integrity_payload !== "string" || !evidence.integrity_payload) {
       reasons.push("missing_integrity_payload");
     } else if (computedPayloadDigest !== evidence.integrity.digest.toLowerCase()) {
       reasons.push("integrity_digest_mismatch");
     }
-    if (!expectedPayloadDigest) {
+    if (expectedPayloadDigest === undefined) {
       reasons.push("expected_payload_digest_missing");
-    } else if (!/^[a-f0-9]{64}$/i.test(expectedPayloadDigest)) {
+    } else if (typeof expectedPayloadDigest !== "string" || !/^[a-f0-9]{64}$/i.test(expectedPayloadDigest)) {
       reasons.push("expected_payload_digest_invalid");
     } else if (computedPayloadDigest && computedPayloadDigest !== expectedPayloadDigest.toLowerCase()) {
       reasons.push("expected_payload_digest_mismatch");
     }
-    const freshness = calculateFreshness(evidence, options.now ?? new Date(), options.freshnessPolicy);
-    if (freshness !== "FRESH") reasons.push(`freshness_${freshness.toLowerCase()}`);
-    reasons.push(...validateCollectionContext(evidence, options.expectedContext).reasons);
+    if (typeof evidence.collected_at === "string" &&
+        (evidence.valid_until === undefined || typeof evidence.valid_until === "string") &&
+        (evidence.max_age_seconds === undefined || typeof evidence.max_age_seconds === "number")) {
+      const freshness = calculateFreshness(evidence as EvidenceLike, options.now ?? new Date(), options.freshnessPolicy);
+      if (freshness !== "FRESH") reasons.push(`freshness_${freshness.toLowerCase()}`);
+    }
+    const contextFieldsValid = typeof evidence.environment === "string" &&
+      typeof evidence.collector_version === "string" && typeof evidence.collection_context_id === "string" &&
+      typeof evidence.target_fingerprint === "string" && typeof evidence.binding_digest === "string";
+    if (targetValidation.valid && contextFieldsValid) {
+      reasons.push(...validateCollectionContext(evidence as EvidenceLike, options.expectedContext).reasons);
+    }
   }
   return { valid: reasons.length === 0, reasons: [...new Set(reasons)] };
 }

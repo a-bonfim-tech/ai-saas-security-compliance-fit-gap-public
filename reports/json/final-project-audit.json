@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-23T10:29:15.228Z",
+  "generatedAt": "2026-08-23T11:43:00.824Z",
   "checks": [
     {
       "category": "Core",
@@ -53,7 +53,7 @@
       "category": "Release",
       "check": "Worktree-local artifact integrity",
       "passed": true,
-      "details": "Unsigned worktree-local SHA-256 manifest is internally consistent with its base commit."
+      "details": "Transient worktree manifest is not present. Generate it locally before requesting an integrity comparison; absence makes no release-provenance claim."
     },
     {
       "category": "CI/CD",

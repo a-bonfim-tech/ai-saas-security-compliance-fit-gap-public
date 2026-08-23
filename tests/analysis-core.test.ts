@@ -50,13 +50,13 @@ describe("analysis core", () => {
       {
         key: "a",
         present: true,
-        source: "test",
+        source: "manual/security-review",
         notes: "present"
       },
       {
         key: "b",
         present: false,
-        source: "test",
+        source: "manual/security-review",
         notes: "missing"
       }
     ];
@@ -107,6 +107,12 @@ describe("analysis core", () => {
   it("escapes CSV values with commas and quotes", () => {
     expect(csvEscape('hello, "world"')).toBe('"hello, ""world"""');
   });
+
+  it.each(["=CMD()", "+1+1", "-2+3", "@SUM(A1:A2)"])(
+    "neutralizes spreadsheet formula input %s", value => {
+      expect(csvEscape(value).startsWith("'")).toBe(true);
+    }
+  );
 
   it("generates CSV output", () => {
     const csv = generateCsv([

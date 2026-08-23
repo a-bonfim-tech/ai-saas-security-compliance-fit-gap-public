@@ -1,6 +1,6 @@
 # Executive Security & Compliance Readiness Report
 
-Generated at: 2026-08-20T22:23:26.854Z
+Generated at: 2026-08-23T09:22:53.070Z
 
 ## Executive Overview
 
@@ -57,7 +57,7 @@ The analysis maps security, privacy and AI governance requirements to controls, 
 
 - GOV-001 (Governance): Security governance responsibilities are defined
 - IAM-001 (Identity and Access Management): Access to systems is controlled using least privilege
-- VULN-001 (Vulnerability Management): Dependencies and code are scanned for vulnerabilities
+- SDLC-001 (Secure Software Development): Code changes are reviewed before being merged
 
 ## Recommended Leadership Actions
 

@@ -173,22 +173,22 @@
     "recommendation": "Implement or document the following missing evidence: risk_management_process_defined."
   },
   {
-    "controlId": "VULN-001",
-    "domain": "Vulnerability Management",
-    "title": "Dependencies and code are scanned for vulnerabilities",
+    "controlId": "SDLC-001",
+    "domain": "Secure Software Development",
+    "title": "Code changes are reviewed before being merged",
     "status": "Evidence Partial",
     "risk": "Medium",
     "score": 63,
     "missingEvidenceCount": 1,
     "missingEvidence": [
-      "dependency_review_enabled"
+      "pull_request_reviews_required"
     ],
-    "recommendation": "Implement or document the following missing evidence: dependency_review_enabled."
+    "recommendation": "Implement or document the following missing evidence: pull_request_reviews_required."
   },
   {
-    "controlId": "SDLC-001",
-    "domain": "Secure Software Development",
-    "title": "Code changes are reviewed before being merged",
+    "controlId": "VULN-001",
+    "domain": "Vulnerability Management",
+    "title": "Dependencies and code are scanned for vulnerabilities",
     "status": "Evidence Sufficient",
     "risk": "Low",
     "score": 25,

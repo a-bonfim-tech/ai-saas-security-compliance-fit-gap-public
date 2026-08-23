@@ -31,5 +31,5 @@ This report adds a simple numeric risk score to each fit-gap finding. The score 
 | 76 | APP-003 | Application Security | Evidence Gap | Medium | 2 |
 | 66 | IAM-001 | Identity and Access Management | Evidence Partial | Medium | 2 |
 | 63 | GOV-001 | Governance | Evidence Partial | Medium | 1 |
-| 63 | VULN-001 | Vulnerability Management | Evidence Partial | Medium | 1 |
-| 25 | SDLC-001 | Secure Software Development | Evidence Sufficient | Low | 0 |
+| 63 | SDLC-001 | Secure Software Development | Evidence Partial | Medium | 1 |
+| 25 | VULN-001 | Vulnerability Management | Evidence Sufficient | Low | 0 |

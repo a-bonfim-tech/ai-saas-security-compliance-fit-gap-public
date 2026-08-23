@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-20T22:23:26.854Z",
+  "generatedAt": "2026-08-23T09:23:15.937Z",
   "methodology": "Framework -> Requirement -> Control -> Evidence -> Status -> Gap -> Risk -> Recommendation -> Roadmap",
   "summary": {
     "totalControls": 14,
@@ -62,15 +62,16 @@
         "SOC 2",
         "OWASP"
       ],
-      "status": "Evidence Sufficient",
-      "risk": "Low",
+      "status": "Evidence Partial",
+      "risk": "Medium",
       "foundEvidence": [
         "branch_protection_enabled",
-        "pull_request_reviews_required",
         "codeowners_configured"
       ],
-      "missingEvidence": [],
-      "recommendation": "Periodically refresh and revalidate the supporting repository evidence."
+      "missingEvidence": [
+        "pull_request_reviews_required"
+      ],
+      "recommendation": "Implement or document the following missing evidence: pull_request_reviews_required."
     },
     {
       "controlId": "VULN-001",
@@ -82,16 +83,15 @@
         "SOC 2",
         "OWASP"
       ],
-      "status": "Evidence Partial",
-      "risk": "Medium",
+      "status": "Evidence Sufficient",
+      "risk": "Low",
       "foundEvidence": [
         "dependabot_enabled",
-        "codeql_enabled"
-      ],
-      "missingEvidence": [
+        "codeql_enabled",
         "dependency_review_enabled"
       ],
-      "recommendation": "Implement or document the following missing evidence: dependency_review_enabled."
+      "missingEvidence": [],
+      "recommendation": "Periodically refresh and revalidate the supporting repository evidence."
     },
     {
       "controlId": "LOG-001",

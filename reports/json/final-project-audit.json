@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-08T15:28:34.167Z",
+  "generatedAt": "2026-08-23T10:29:15.228Z",
   "checks": [
     {
       "category": "Core",
@@ -17,7 +17,7 @@
       "category": "Documentation",
       "check": "Documentation coverage",
       "passed": true,
-      "details": "Documentation files found: 69."
+      "details": "Documentation files found: 85."
     },
     {
       "category": "Frameworks",
@@ -35,13 +35,37 @@
       "category": "Evidence",
       "check": "Evidence register",
       "passed": true,
-      "details": "Evidence items: 51. Present: 16. Missing/false: 35."
+      "details": "Evidence items: 51. Present: 20. Missing/false: 31."
     },
     {
       "category": "Automation",
       "check": "Package scripts",
       "passed": true,
       "details": "All required scripts exist."
+    },
+    {
+      "category": "Evidence",
+      "check": "Presence, promotion and control-support separation",
+      "passed": true,
+      "details": "Persisted non-promotable evidence does not support controls, and sufficient claims have supporting evidence."
+    },
+    {
+      "category": "Release",
+      "check": "Worktree-local artifact integrity",
+      "passed": true,
+      "details": "Unsigned worktree-local SHA-256 manifest is internally consistent with its base commit."
+    },
+    {
+      "category": "CI/CD",
+      "check": "Workflow security policy",
+      "passed": true,
+      "details": "Immutable references, checkout safety, triggers and permissions passed."
+    },
+    {
+      "category": "Documentation",
+      "check": "Security traceability links",
+      "passed": true,
+      "details": "Threat, standards, quality, traceability, case-study and decision artifacts exist."
     },
     {
       "category": "GitHub",

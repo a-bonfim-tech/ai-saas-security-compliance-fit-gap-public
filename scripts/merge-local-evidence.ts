@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import { readSafeJson } from "./safe-file";
 
 type Evidence = {
   key: string;
@@ -16,7 +17,7 @@ type GithubLocalEvidenceReport = {
 };
 
 function readJson<T>(relativePath: string): T {
-  return JSON.parse(fs.readFileSync(path.join(process.cwd(), relativePath), "utf8")) as T;
+  return readSafeJson<T>(relativePath);
 }
 
 function writeJson(relativePath: string, data: unknown): void {

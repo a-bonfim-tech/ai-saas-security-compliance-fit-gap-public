@@ -131,16 +131,16 @@
     ]
   },
   {
-    "controlId": "VULN-001",
-    "domain": "Vulnerability Management",
-    "title": "Dependencies and code are scanned for vulnerabilities",
+    "controlId": "SDLC-001",
+    "domain": "Secure Software Development",
+    "title": "Code changes are reviewed before being merged",
     "status": "Evidence Partial",
     "risk": "Medium",
     "priority": "P2",
     "effort": "Low",
-    "remediation": "Implement or document the following missing evidence: dependency_review_enabled.",
+    "remediation": "Implement or document the following missing evidence: pull_request_reviews_required.",
     "missingEvidence": [
-      "dependency_review_enabled"
+      "pull_request_reviews_required"
     ]
   },
   {

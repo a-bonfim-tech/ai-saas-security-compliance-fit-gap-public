@@ -1,3 +1,6 @@
+import { isPromotableEvidence, type EvidenceLike, type ExpectedCollectionContext } from "./evidence-validation";
+import { escapeMarkdownTableCell } from "./markdown-table";
+
 export type Control = {
   id: string;
   domain: string;
@@ -6,10 +9,8 @@ export type Control = {
   expectedEvidence: string[];
 };
 
-export type Evidence = {
+export type Evidence = EvidenceLike & {
   key: string;
-  present: boolean;
-  source: string | null;
   notes: string;
 };
 
@@ -76,9 +77,15 @@ export function buildRecommendation(status: Status, missingEvidence: string[]): 
   return `Implement or document the following missing evidence: ${missingEvidence.join(", ")}.`;
 }
 
-export function assessControl(control: Control, evidence: Evidence[]): Finding {
+export function assessControl(
+  control: Control,
+  evidence: Evidence[],
+  expectedContexts: Readonly<Record<string, ExpectedCollectionContext>> = {}
+): Finding {
   const foundEvidence = control.expectedEvidence.filter(expected =>
-    evidence.some(item => item.key === expected && item.present)
+    evidence.some(item => item.key === expected && isPromotableEvidence(item, {
+      expectedContext: item.external_target ? expectedContexts[item.key] : undefined
+    }).valid)
   );
 
   const missingEvidence = control.expectedEvidence.filter(
@@ -114,7 +121,8 @@ export function buildSummary(findings: Finding[]): Summary {
 }
 
 export function csvEscape(value: string): string {
-  const normalized = value.replace(/\n/g, " ").replace(/\r/g, " ");
+  let normalized = value.replace(/\n/g, " ").replace(/\r/g, " ");
+  if (/^[\t ]*[=+\-@]/.test(normalized)) normalized = `'${normalized}`;
   if (normalized.includes(",") || normalized.includes('"')) {
     return `"${normalized.replace(/"/g, '""')}"`;
   }
@@ -179,8 +187,13 @@ export function generateMarkdown(report: Report): string {
   lines.push("|---|---|---|---|---|");
 
   for (const finding of report.findings) {
+    const controlId = escapeMarkdownTableCell(finding.controlId);
+    const domain = escapeMarkdownTableCell(finding.domain);
+    const status = escapeMarkdownTableCell(finding.status);
+    const risk = escapeMarkdownTableCell(finding.risk);
+    const recommendation = escapeMarkdownTableCell(finding.recommendation);
     lines.push(
-      `| ${finding.controlId} | ${finding.domain} | ${finding.status} | ${finding.risk} | ${finding.recommendation} |`
+      `| ${controlId} | ${domain} | ${status} | ${risk} | ${recommendation} |`
     );
   }
 
@@ -189,19 +202,19 @@ export function generateMarkdown(report: Report): string {
   lines.push("");
 
   for (const finding of report.findings) {
-    lines.push(`### ${finding.controlId} — ${finding.title}`);
+    lines.push(`### ${escapeMarkdownTableCell(finding.controlId)} — ${escapeMarkdownTableCell(finding.title)}`);
     lines.push("");
-    lines.push(`Frameworks: ${finding.frameworks.join(", ")}`);
+    lines.push(`Frameworks: ${finding.frameworks.map(escapeMarkdownTableCell).join(", ")}`);
     lines.push("");
     lines.push(`Status: ${finding.status}`);
     lines.push("");
     lines.push(`Risk: ${finding.risk}`);
     lines.push("");
-    lines.push(`Found evidence: ${finding.foundEvidence.length > 0 ? finding.foundEvidence.join(", ") : "None"}`);
+    lines.push(`Found evidence: ${finding.foundEvidence.length > 0 ? finding.foundEvidence.map(escapeMarkdownTableCell).join(", ") : "None"}`);
     lines.push("");
-    lines.push(`Missing evidence: ${finding.missingEvidence.length > 0 ? finding.missingEvidence.join(", ") : "None"}`);
+    lines.push(`Missing evidence: ${finding.missingEvidence.length > 0 ? finding.missingEvidence.map(escapeMarkdownTableCell).join(", ") : "None"}`);
     lines.push("");
-    lines.push(`Recommendation: ${finding.recommendation}`);
+    lines.push(`Recommendation: ${escapeMarkdownTableCell(finding.recommendation)}`);
     lines.push("");
   }
 

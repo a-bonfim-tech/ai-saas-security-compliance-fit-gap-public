@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import { readSafeJson } from "./safe-file";
 
 type Evidence = {
   key: string;
@@ -22,7 +23,7 @@ const domainEvidenceFiles = [
 ];
 
 function readJson<T>(relativePath: string): T {
-  return JSON.parse(fs.readFileSync(path.join(process.cwd(), relativePath), "utf8")) as T;
+  return readSafeJson<T>(relativePath);
 }
 
 function writeJson(relativePath: string, data: unknown): void {
@@ -37,7 +38,10 @@ function mergeEvidence(base: Evidence[], incoming: Evidence[]): Evidence[] {
   const merged = new Map<string, Evidence>();
 
   for (const item of base) {
-    merged.set(item.key, item);
+    merged.set(item.key, {
+      ...item,
+      notes: Array.from(new Set(item.notes.split(" | "))).join(" | ")
+    });
   }
 
   for (const item of incoming) {
@@ -48,13 +52,19 @@ function mergeEvidence(base: Evidence[], incoming: Evidence[]): Evidence[] {
       continue;
     }
 
+    const prefix = item.present
+      ? "Updated by domain evidence ingestion"
+      : "Domain evidence note";
+    const fragment = `${prefix}: ${item.notes}`;
+    const notes = existing.notes.split(" | ").includes(fragment)
+      ? existing.notes
+      : `${existing.notes} | ${fragment}`;
+
     merged.set(item.key, {
       key: item.key,
       present: item.present || existing.present,
       source: item.present ? item.source : existing.source,
-      notes: item.present
-        ? `${existing.notes} | Updated by domain evidence ingestion: ${item.notes}`
-        : `${existing.notes} | Domain evidence note: ${item.notes}`
+      notes
     });
   }
 

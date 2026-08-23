@@ -1,11 +1,12 @@
 import fs from "fs";
 import path from "path";
+import { fileURLToPath } from "node:url";
 import { execFileSync } from "child_process";
 import { escapeMarkdownTableCell } from "./markdown-table";
 
 type PublicationCheck = {
   check: string;
-  passed: boolean;
+  status: "PASS" | "FAIL" | "UNVERIFIED";
   details: string;
 };
 
@@ -58,6 +59,44 @@ function getMeaningfulGitChanges(): string[] {
     .filter(line => !line.includes("reports/json/github-publication-check.json"));
 }
 
+export function decodeMarkdownTarget(target: string): { decoded?: string; error?: "BROKEN_OR_MALFORMED_MARKDOWN_LINK" } {
+  try {
+    return { decoded: decodeURIComponent(target.replace(/^<|>$/g, "")) };
+  } catch {
+    return { error: "BROKEN_OR_MALFORMED_MARKDOWN_LINK" };
+  }
+}
+
+export function classifyMarkdownTarget(target: string, baseDirectory: string): "IGNORED" | "VALID" | "MISSING" | "BROKEN_OR_MALFORMED_MARKDOWN_LINK" {
+  const withoutAnchor = target.split("#")[0];
+  if (!withoutAnchor || /^(?:https?:|mailto:|#)/.test(target) || target.startsWith("/")) return "IGNORED";
+  const decoded = decodeMarkdownTarget(withoutAnchor);
+  if (decoded.error) return decoded.error;
+  return fs.existsSync(path.resolve(baseDirectory, decoded.decoded!)) ? "VALID" : "MISSING";
+}
+
+function scanTrackedPublicationContent(): { machineSpecific: string[]; brokenLinks: string[] } {
+  const tracked = (run("git", ["ls-files", "--cached", "--others", "--exclude-standard"]) ?? "").split("\n").filter(Boolean);
+  const machineSpecific: string[] = [];
+  const brokenLinks: string[] = [];
+  for (const relative of tracked) {
+    const full = path.join(process.cwd(), relative);
+    if (!fs.existsSync(full) || fs.lstatSync(full).isSymbolicLink()) continue;
+    let content: string;
+    try { content = fs.readFileSync(full, "utf8"); } catch { continue; }
+    if (/(?:\/Users\/[^/\s]+|\/private\/var\/folders\/|\/var\/folders\/)/.test(content)) machineSpecific.push(relative);
+    if (!relative.endsWith(".md")) continue;
+    for (const match of content.matchAll(/\[[^\]]*\]\(([^)]+)\)/g)) {
+      const target = match[1];
+      const classification = classifyMarkdownTarget(target, path.dirname(full));
+      if (classification === "MISSING" || classification === "BROKEN_OR_MALFORMED_MARKDOWN_LINK") {
+        brokenLinks.push(`${relative} -> ${target} (${classification})`);
+      }
+    }
+  }
+  return { machineSpecific, brokenLinks };
+}
+
 function main(): void {
   fs.mkdirSync(path.join(process.cwd(), "reports/final"), { recursive: true });
   fs.mkdirSync(path.join(process.cwd(), "reports/json"), { recursive: true });
@@ -68,7 +107,7 @@ function main(): void {
 
   checks.push({
     check: "Git working tree",
-    passed: meaningfulChangesBeforeReportWrite.length === 0,
+    status: meaningfulChangesBeforeReportWrite.length === 0 ? "PASS" : "FAIL",
     details: meaningfulChangesBeforeReportWrite.length === 0
       ? "Working tree has no meaningful uncommitted changes. Publication-check report files are ignored for this check because the command regenerates them."
       : `Working tree has meaningful uncommitted changes: ${meaningfulChangesBeforeReportWrite.join("; ")}`
@@ -77,14 +116,14 @@ function main(): void {
   const remote = run("git", ["remote", "get-url", "origin"]);
   checks.push({
     check: "Git remote",
-    passed: Boolean(remote),
+    status: remote ? "PASS" : "FAIL",
     details: remote ? `Origin remote configured: ${remote}` : "Origin remote missing."
   });
 
   const envFiles = scanForForbiddenEnvFiles();
   checks.push({
     check: "Forbidden .env files",
-    passed: envFiles.length === 0,
+    status: envFiles.length === 0 ? "PASS" : "FAIL",
     details: envFiles.length === 0 ? "No forbidden .env files found." : `Forbidden files: ${envFiles.join(", ")}`
   });
 
@@ -102,7 +141,7 @@ function main(): void {
   const missingDocs = requiredDocs.filter(file => !exists(file));
   checks.push({
     check: "Publication documentation",
-    passed: missingDocs.length === 0,
+    status: missingDocs.length === 0 ? "PASS" : "FAIL",
     details: missingDocs.length === 0 ? "Publication documentation exists." : `Missing docs: ${missingDocs.join(", ")}`
   });
 
@@ -116,15 +155,27 @@ function main(): void {
   const missingReports = requiredReports.filter(file => !exists(file));
   checks.push({
     check: "Publication reports",
-    passed: missingReports.length === 0,
+    status: missingReports.length === 0 ? "PASS" : "FAIL",
     details: missingReports.length === 0 ? "Publication reports exist." : `Missing reports: ${missingReports.join(", ")}`
   });
 
   const repoInfo = run("gh", ["repo", "view", "--json", "nameWithOwner,visibility,isPrivate,url,description"]);
   checks.push({
     check: "GitHub repository metadata access",
-    passed: Boolean(repoInfo),
-    details: repoInfo ? "GitHub repository metadata is accessible." : "GitHub repository metadata could not be read."
+    status: repoInfo ? "PASS" : "UNVERIFIED",
+    details: repoInfo ? "GitHub repository metadata is accessible." : "GitHub repository metadata is unavailable in this execution context; no enabled/disabled conclusion is drawn."
+  });
+
+  const publicationContent = scanTrackedPublicationContent();
+  checks.push({
+    check: "Machine-specific tracked content",
+    status: publicationContent.machineSpecific.length === 0 ? "PASS" : "FAIL",
+    details: publicationContent.machineSpecific.length === 0 ? "No absolute local user or temporary paths found in tracked content." : publicationContent.machineSpecific.join(", ")
+  });
+  checks.push({
+    check: "Relative documentation links",
+    status: publicationContent.brokenLinks.length === 0 ? "PASS" : "FAIL",
+    details: publicationContent.brokenLinks.length === 0 ? "Tracked relative Markdown links resolve locally." : publicationContent.brokenLinks.join(", ")
   });
 
   const generatedAt = new Date().toISOString();
@@ -143,14 +194,14 @@ function main(): void {
   for (const check of checks) {
     const checkName = escapeMarkdownTableCell(check.check);
     const details = escapeMarkdownTableCell(check.details);
-    lines.push(`| ${checkName} | ${check.passed ? "PASS" : "FAIL"} | ${details} |`);
+    lines.push(`| ${checkName} | ${check.status} | ${details} |`);
   }
 
   lines.push("");
   lines.push("## Recommendation");
   lines.push("");
 
-  const failed = checks.filter(check => !check.passed);
+  const failed = checks.filter(check => check.status === "FAIL");
 
   if (failed.length === 0) {
     lines.push("The repository passed the local publication checks. Before making it public, still review GitHub settings and confirm that no real company, customer or confidential data is present.");
@@ -170,7 +221,7 @@ function main(): void {
   console.log("");
 
   for (const check of checks) {
-    console.log(`${check.passed ? "PASS" : "FAIL"} - ${check.check}: ${check.details}`);
+    console.log(`${check.status} - ${check.check}: ${check.details}`);
   }
 
   if (failed.length > 0) {
@@ -183,4 +234,4 @@ function main(): void {
   console.log("GitHub publication check passed.");
 }
 
-main();
+if (path.resolve(process.argv[1] ?? "") === fileURLToPath(import.meta.url)) main();

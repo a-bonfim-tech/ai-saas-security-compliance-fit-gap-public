@@ -5,6 +5,78 @@ import os from "node:os";
 import path from "node:path";
 import { analyzePnpmVersionParity, analyzeWorkflowText } from "../scripts/workflow-policy";
 
+const REQUIRED_CI_CHECK_NAME = "Validate TypeScript project";
+
+function indentation(line: string): number {
+  return line.match(/^\s*/)?.[0].length ?? 0;
+}
+
+function hasPullRequestMainTrigger(workflow: string): boolean {
+  const lines = workflow.replace(/\r\n?/g, "\n").split("\n");
+  const onIndex = lines.findIndex(line => /^on:\s*$/.test(line));
+  if (onIndex < 0) return false;
+  const end = lines.findIndex((line, index) => index > onIndex && line.trim() && indentation(line) === 0);
+  const triggerLines = lines.slice(onIndex + 1, end < 0 ? undefined : end);
+  const pullRequestIndex = triggerLines.findIndex(line => /^  pull_request:\s*/.test(line));
+  if (pullRequestIndex < 0) return false;
+  const nextTrigger = triggerLines.findIndex((line, index) =>
+    index > pullRequestIndex && /^  [A-Za-z0-9_-]+:\s*/.test(line)
+  );
+  const pullRequest = triggerLines.slice(
+    pullRequestIndex,
+    nextTrigger < 0 ? undefined : nextTrigger
+  ).join("\n");
+  return /branches:\s*\[[^\]]*\bmain\b[^\]]*\]/.test(pullRequest) ||
+    /branches:\s*\n(?: {6}-\s*.*\n)* {6}-\s*main\s*$/m.test(pullRequest);
+}
+
+function requiredPolicyIsStructurallyEnforced(workflows: string[]): boolean {
+  const matchingJobs: string[] = [];
+
+  for (const workflow of workflows) {
+    if (!hasPullRequestMainTrigger(workflow)) continue;
+    const lines = workflow.replace(/\r\n?/g, "\n").split("\n");
+    const jobsIndex = lines.findIndex(line => /^jobs:\s*$/.test(line));
+    if (jobsIndex < 0) continue;
+
+    for (let index = jobsIndex + 1; index < lines.length;) {
+      if (lines[index].trim() && indentation(lines[index]) === 0) break;
+      if (!/^  [A-Za-z0-9_-]+:\s*$/.test(lines[index])) { index++; continue; }
+      const start = index;
+      index++;
+      while (index < lines.length && (!lines[index].trim() || indentation(lines[index]) > 2)) index++;
+      const job = lines.slice(start, index).join("\n");
+      if (/^    name:\s*Validate TypeScript project\s*$/m.test(job)) matchingJobs.push(job);
+    }
+  }
+
+  if (matchingJobs.length !== 1) return false;
+  const job = matchingJobs[0];
+  if (/^    if\s*:/m.test(job)) return false;
+
+  const lines = job.split("\n");
+  let validPolicySteps = 0;
+  let unsafePolicyStep = false;
+  for (let index = 0; index < lines.length; index++) {
+    if (!/^      -\s+/.test(lines[index])) continue;
+    const step = [lines[index].replace(/^      -\s+/, "        ")];
+    for (let cursor = index + 1; cursor < lines.length; cursor++) {
+      if (/^      -\s+/.test(lines[cursor]) || (lines[cursor].trim() && indentation(lines[cursor]) <= 4)) break;
+      step.push(lines[cursor]);
+    }
+    const stepText = step.join("\n");
+    const runValues = [...stepText.matchAll(/^        run:\s*(.*?)\s*$/gm)].map(match => match[1]);
+    if (!runValues.some(value => /\bpnpm\s+security:policy\b/.test(value))) continue;
+
+    const directPolicy = runValues.length === 1 && runValues[0] === "pnpm security:policy";
+    const continueOnError = /^        continue-on-error:\s*true\s*$/m.test(stepText);
+    const conditional = /^        if\s*:/m.test(stepText);
+    if (!directPolicy || continueOnError || conditional) unsafePolicyStep = true;
+    else validPolicySteps++;
+  }
+  return validPolicySteps === 1 && !unsafePolicyStep;
+}
+
 describe("GitHub Actions policy", () => {
   it("accepts pinned read-only checkout", () => {
     expect(analyzeWorkflowText(`permissions:\n  contents: read\nsteps:\n  - name: Checkout\n    uses: actions/checkout@${"a".repeat(40)}\n    with:\n      persist-credentials: false\n`)).toEqual([]);
@@ -432,6 +504,68 @@ describe("pnpm workflow version parity", () => {
     for (const [file, name] of requiredNames) {
       expect(fs.readFileSync(path.join(workflowDirectory, file), "utf8")).toContain(name);
     }
+  });
+
+  const requiredWorkflow = (jobBody: string, checkName = REQUIRED_CI_CHECK_NAME) => `name: CI
+on:
+  pull_request:
+    branches: [main]
+jobs:
+  validate:
+    name: ${checkName}
+${jobBody}
+`;
+
+  it("structurally enforces the production security policy gate in the real required pull-request job", () => {
+    const requiredWorkflowFiles = [
+      "ci.yml", "quality-check.yml", "evidence-refresh.yml",
+      "validate-reports.yml", "release-check.yml", "codeql.yml"
+    ];
+    const requiredWorkflowText = requiredWorkflowFiles.map(file =>
+      fs.readFileSync(path.join(process.cwd(), ".github/workflows", file), "utf8")
+    );
+    expect(requiredPolicyIsStructurallyEnforced(requiredWorkflowText)).toBe(true);
+  });
+
+  it.each([
+    ["missing policy", `    steps:\n      - run: pnpm test`],
+    ["renamed policy", `    steps:\n      - run: pnpm security:polic`],
+    ["continue-on-error after run", `    steps:\n      - run: pnpm security:policy\n        continue-on-error: true`],
+    ["continue-on-error before run", `    steps:\n      - continue-on-error: true\n        run: pnpm security:policy`],
+    ["named continue-on-error before run", `    steps:\n      - name: policy\n        continue-on-error: true\n        run: pnpm security:policy`],
+    ["continue-on-error before name and run", `    steps:\n      - continue-on-error: true\n        name: policy\n        run: pnpm security:policy`],
+    ["job condition", `    if: github.event_name != 'pull_request'\n    steps:\n      - run: pnpm security:policy`],
+    ["step condition after run", `    steps:\n      - run: pnpm security:policy\n        if: false`],
+    ["step condition before run", `    steps:\n      - if: false\n        run: pnpm security:policy`],
+    ["named step condition before run", `    steps:\n      - name: policy\n        if: false\n        run: pnpm security:policy`],
+    ["step condition before name and run", `    steps:\n      - if: false\n        name: policy\n        run: pnpm security:policy`],
+    ["dead shell branch", `    steps:\n      - run: false && pnpm security:policy`],
+    ["ignored shell failure", `    steps:\n      - run: pnpm security:policy || true`],
+    ["weakened then valid policy step", `    steps:\n      - continue-on-error: true\n        run: pnpm security:policy\n      - run: pnpm security:policy`],
+    ["valid then weakened policy step", `    steps:\n      - run: pnpm security:policy\n      - if: false\n        run: pnpm security:policy`]
+  ])("rejects non-enforcing required CI variant: %s", (_label, jobBody) => {
+    expect(requiredPolicyIsStructurallyEnforced([requiredWorkflow(jobBody)])).toBe(false);
+  });
+
+  it("rejects policy execution in another job or another workflow", () => {
+    const requiredWithoutPolicy = requiredWorkflow(`    steps:\n      - run: pnpm test`);
+    const otherJob = `name: CI\non:\n  pull_request:\n    branches: [main]\njobs:\n  optional:\n    name: Optional\n    steps:\n      - run: pnpm security:policy\n`;
+    const otherWorkflow = requiredWorkflow(`    steps:\n      - run: pnpm security:policy`, "Optional policy check");
+    expect(requiredPolicyIsStructurallyEnforced([requiredWithoutPolicy, otherJob])).toBe(false);
+    expect(requiredPolicyIsStructurallyEnforced([requiredWithoutPolicy, otherWorkflow])).toBe(false);
+  });
+
+  it.each([
+    ["direct", `    steps:\n      - run: pnpm security:policy`],
+    ["name before run", `    steps:\n      - name: policy\n        run: pnpm security:policy`],
+    ["name after run", `    steps:\n      - run: pnpm security:policy\n        name: policy`],
+    ["shell before run", `    steps:\n      - shell: bash\n        run: pnpm security:policy`],
+    ["shell after run", `    steps:\n      - run: pnpm security:policy\n        shell: bash`],
+    ["env and comments around run", `    steps:\n      - env:\n          CI: true\n\n        # policy remains direct\n        run: pnpm security:policy`],
+    ["policy after another step", `    steps:\n      - run: pnpm test\n      - run: pnpm security:policy`],
+    ["policy before another step", `    steps:\n      - run: pnpm security:policy\n      - run: pnpm test`]
+  ])("accepts fail-closed policy ordering: %s", (_label, jobBody) => {
+    expect(requiredPolicyIsStructurallyEnforced([requiredWorkflow(jobBody)])).toBe(true);
   });
 
   it("fails closed for escaped executable YAML keys without flagging escaped metadata values", () => {

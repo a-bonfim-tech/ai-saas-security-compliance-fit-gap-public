@@ -7,7 +7,23 @@ type Evidence = {
   present: boolean;
   source: string | null;
   notes: string;
+  [field: string]: unknown;
 };
+
+const SECURITY_RELEVANT_METADATA_FIELDS = [
+  "status",
+  "external_target",
+  "integrity",
+  "integrity_payload",
+  "collected_at",
+  "collector_version",
+  "environment",
+  "collection_context",
+  "collection_context_id",
+  "target_fingerprint",
+  "binding_digest",
+  "verification_method"
+] as const;
 
 type DomainEvidenceFile = {
   area: string;
@@ -60,7 +76,22 @@ function mergeEvidence(base: Evidence[], incoming: Evidence[]): Evidence[] {
       ? existing.notes
       : `${existing.notes} | ${fragment}`;
 
+    if (item.present) {
+      const discardedFields = SECURITY_RELEVANT_METADATA_FIELDS.filter(field =>
+        existing[field] !== undefined && item[field] === undefined
+      );
+
+      if (discardedFields.length > 0) {
+        throw new Error(
+          `Refusing to discard security metadata for ${item.key}: ${discardedFields.join(", ")}`
+        );
+      }
+    }
+
+    const selected = item.present ? item : existing;
+
     merged.set(item.key, {
+      ...selected,
       key: item.key,
       present: item.present || existing.present,
       source: item.present ? item.source : existing.source,

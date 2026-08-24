@@ -40,6 +40,9 @@ jobs:
       - name: Install locked dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Enforce workflow security policy
+        run: pnpm security:policy
+
       - name: Typecheck
         run: pnpm typecheck
 

@@ -88,9 +88,10 @@
                 "mfa_enabled",
                 "privileged_access_reviewed"
               ]
-            }
+            },
+            "present": { "const": true }
           },
-          "required": ["key"]
+          "required": ["key", "present"]
         },
         "then": {
           "required": [

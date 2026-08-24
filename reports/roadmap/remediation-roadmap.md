@@ -17,6 +17,7 @@ This roadmap prioritizes remediation actions based on fit-gap findings, risk lev
 
 | Priority | Control | Domain | Risk | Effort | Remediation |
 |---|---|---|---|---|---|
+| P1 | IAM-001 | Identity and Access Management | High | Medium | Implement or document the following missing evidence: mfa_enabled, rbac_defined, privileged_access_reviewed. |
 | P1 | LOG-001 | Logging and Monitoring | High | Medium | Implement or document the following missing evidence: application_logs_enabled, cloud_audit_logs_enabled, alerting_process_defined. |
 | P1 | PRIV-001 | Privacy and Data Protection | High | High | Implement or document the following missing evidence: data_inventory_exists, privacy_notice_exists, data_retention_defined. |
 | P1 | AI-001 | AI Governance | High | High | Implement or document the following missing evidence: ai_system_description_exists, ai_data_flow_documented, human_oversight_defined, prompt_injection_risk_assessed. |
@@ -25,13 +26,21 @@ This roadmap prioritizes remediation actions based on fit-gap findings, risk lev
 | P1 | PRIV-002 | Privacy and Data Protection | High | High | Implement or document the following missing evidence: controller_processor_roles_reviewed, dpa_reviewed, data_subject_rights_process_documented. |
 | P1 | AI-002 | AI Governance | High | Medium | Implement or document the following missing evidence: ai_vendor_review_documented, ai_transparency_notice_reviewed. |
 | P2 | GOV-001 | Governance | Medium | Low | Implement or document the following missing evidence: risk_management_process_defined. |
-| P2 | IAM-001 | Identity and Access Management | Medium | Medium | Implement or document the following missing evidence: rbac_defined, privileged_access_reviewed. |
-| P2 | VULN-001 | Vulnerability Management | Medium | Low | Implement or document the following missing evidence: dependency_review_enabled. |
+| P2 | SDLC-001 | Secure Software Development | Medium | Low | Implement or document the following missing evidence: pull_request_reviews_required. |
 | P2 | APP-001 | Application Security | Medium | Medium | Implement or document the following missing evidence: authentication_mechanism_documented, authorization_checks_documented. |
 | P2 | APP-002 | Application Security | Medium | Medium | Implement or document the following missing evidence: input_validation_documented, secure_error_handling_documented. |
 | P2 | APP-003 | Application Security | Medium | Medium | Implement or document the following missing evidence: secrets_management_documented, rate_limiting_reviewed. |
 
 ## Detailed Missing Evidence
+
+### P1 — IAM-001: Access to systems is controlled using least privilege
+
+- Domain: Identity and Access Management
+- Status: Evidence Gap
+- Risk: High
+- Estimated effort: Medium
+- Remediation: Implement or document the following missing evidence: mfa_enabled, rbac_defined, privileged_access_reviewed.
+- Missing evidence: mfa_enabled, rbac_defined, privileged_access_reviewed
 
 ### P1 — LOG-001: Security-relevant events are logged and monitored
 
@@ -105,23 +114,14 @@ This roadmap prioritizes remediation actions based on fit-gap findings, risk lev
 - Remediation: Implement or document the following missing evidence: risk_management_process_defined.
 - Missing evidence: risk_management_process_defined
 
-### P2 — IAM-001: Access to systems is controlled using least privilege
+### P2 — SDLC-001: Code changes are reviewed before being merged
 
-- Domain: Identity and Access Management
-- Status: Evidence Partial
-- Risk: Medium
-- Estimated effort: Medium
-- Remediation: Implement or document the following missing evidence: rbac_defined, privileged_access_reviewed.
-- Missing evidence: rbac_defined, privileged_access_reviewed
-
-### P2 — VULN-001: Dependencies and code are scanned for vulnerabilities
-
-- Domain: Vulnerability Management
+- Domain: Secure Software Development
 - Status: Evidence Partial
 - Risk: Medium
 - Estimated effort: Low
-- Remediation: Implement or document the following missing evidence: dependency_review_enabled.
-- Missing evidence: dependency_review_enabled
+- Remediation: Implement or document the following missing evidence: pull_request_reviews_required.
+- Missing evidence: pull_request_reviews_required
 
 ### P2 — APP-001: Authentication and authorization are documented and reviewed
 

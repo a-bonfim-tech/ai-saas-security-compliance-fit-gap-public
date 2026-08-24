@@ -1,6 +1,6 @@
 # Executive Security & Compliance Readiness Report
 
-Generated at: 2026-08-20T22:23:26.854Z
+Generated at: 2026-08-23T11:40:43.126Z
 
 ## Executive Overview
 
@@ -12,10 +12,10 @@ The analysis maps security, privacy and AI governance requirements to controls, 
 
 - Total controls assessed: 14
 - Evidence-sufficient controls: 1 (7%)
-- Evidence-partial controls: 3 (21%)
-- Evidence gaps: 10 (71%)
-- High-risk findings: 7
-- Medium-risk findings: 6
+- Evidence-partial controls: 2 (14%)
+- Evidence gaps: 11 (79%)
+- High-risk findings: 8
+- Medium-risk findings: 5
 - Low-risk findings: 1
 
 ## Domains Assessed
@@ -32,6 +32,7 @@ The analysis maps security, privacy and AI governance requirements to controls, 
 
 ## Key Risks
 
+- IAM-001 (Identity and Access Management): Access to systems is controlled using least privilege
 - LOG-001 (Logging and Monitoring): Security-relevant events are logged and monitored
 - PRIV-001 (Privacy and Data Protection): Personal data processing is documented and controlled
 - AI-001 (AI Governance): AI system purpose, data flow and risks are documented
@@ -42,6 +43,7 @@ The analysis maps security, privacy and AI governance requirements to controls, 
 
 ## Main Gaps
 
+- IAM-001 (Identity and Access Management): Access to systems is controlled using least privilege
 - LOG-001 (Logging and Monitoring): Security-relevant events are logged and monitored
 - PRIV-001 (Privacy and Data Protection): Personal data processing is documented and controlled
 - AI-001 (AI Governance): AI system purpose, data flow and risks are documented
@@ -56,8 +58,7 @@ The analysis maps security, privacy and AI governance requirements to controls, 
 ## Partially Covered Areas
 
 - GOV-001 (Governance): Security governance responsibilities are defined
-- IAM-001 (Identity and Access Management): Access to systems is controlled using least privilege
-- VULN-001 (Vulnerability Management): Dependencies and code are scanned for vulnerabilities
+- SDLC-001 (Secure Software Development): Code changes are reviewed before being merged
 
 ## Recommended Leadership Actions
 

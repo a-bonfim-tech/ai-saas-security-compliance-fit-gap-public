@@ -1,5 +1,20 @@
 [
   {
+    "controlId": "IAM-001",
+    "domain": "Identity and Access Management",
+    "title": "Access to systems is controlled using least privilege",
+    "status": "Evidence Gap",
+    "risk": "High",
+    "priority": "P1",
+    "effort": "Medium",
+    "remediation": "Implement or document the following missing evidence: mfa_enabled, rbac_defined, privileged_access_reviewed.",
+    "missingEvidence": [
+      "mfa_enabled",
+      "rbac_defined",
+      "privileged_access_reviewed"
+    ]
+  },
+  {
     "controlId": "LOG-001",
     "domain": "Logging and Monitoring",
     "title": "Security-relevant events are logged and monitored",
@@ -117,30 +132,16 @@
     ]
   },
   {
-    "controlId": "IAM-001",
-    "domain": "Identity and Access Management",
-    "title": "Access to systems is controlled using least privilege",
-    "status": "Evidence Partial",
-    "risk": "Medium",
-    "priority": "P2",
-    "effort": "Medium",
-    "remediation": "Implement or document the following missing evidence: rbac_defined, privileged_access_reviewed.",
-    "missingEvidence": [
-      "rbac_defined",
-      "privileged_access_reviewed"
-    ]
-  },
-  {
-    "controlId": "VULN-001",
-    "domain": "Vulnerability Management",
-    "title": "Dependencies and code are scanned for vulnerabilities",
+    "controlId": "SDLC-001",
+    "domain": "Secure Software Development",
+    "title": "Code changes are reviewed before being merged",
     "status": "Evidence Partial",
     "risk": "Medium",
     "priority": "P2",
     "effort": "Low",
-    "remediation": "Implement or document the following missing evidence: dependency_review_enabled.",
+    "remediation": "Implement or document the following missing evidence: pull_request_reviews_required.",
     "missingEvidence": [
-      "dependency_review_enabled"
+      "pull_request_reviews_required"
     ]
   },
   {

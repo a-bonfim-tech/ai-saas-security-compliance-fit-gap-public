@@ -4,6 +4,15 @@ A TypeScript-based security, compliance and AI governance engineering project fo
 
 The repository translates security, privacy and AI governance requirements into normalized controls, expected evidence, risk-rated findings and prioritized remediation outputs. It is designed around auditable evidence handling rather than checklist-only compliance claims.
 
+## Recruiter Quick Tour
+
+1. Review the [cybersecurity case study](docs/portfolio/cybersecurity-case-study.md).
+2. Inspect the [threat model](docs/security/threat-model.md) and [control traceability matrix](docs/audit/control-traceability-matrix.md).
+3. Review the [NIST SSDF crosswalk](docs/standards/nist-ssdf-crosswalk.md) and [ISO/IEC 25010 assessment](docs/quality/iso-25010-assessment.md).
+4. Reproduce the automated checks using `pnpm validate` and `pnpm security:scan`.
+
+Security highlights include fail-closed runtime evidence validation driven by authoritative per-key requirement metadata, strict primitive and status validation independent of JSON Schema, caller-supplied authoritative context explicitly bound to the external evidence key, freshness and replay checks, bounded secret scanning with explicit partial-coverage reporting, immutable CI dependencies, limited lexical workflow-policy checks and deterministic worktree-local integrity manifests.
+
 ## Problem Statement
 
 AI-enabled SaaS teams must often determine whether technical and governance practices are sufficiently aligned with multiple frameworks at the same time. The difficult part is not listing requirements; it is connecting each requirement to verifiable evidence, identifying where evidence is incomplete, and turning gaps into prioritized remediation actions.
@@ -128,6 +137,8 @@ The current TypeScript analysis engine can:
 19. Generate a project handoff package.
 20. Generate a final project audit report.
 21. Generate maintenance and GitHub publication-readiness reports.
+22. Reject placeholder, reserved-domain and provider-incompatible external targets.
+23. Classify known evidence keys centrally as documentary, repository or external operational; unknown keys fail closed. Runtime promotion validates security-significant shapes and a positive status allowlist without depending on JSON Schema execution. External operational keys require a target, correlated product binding, authoritative expected context explicitly bound to the evidence key, verification method and three-way SHA-256 agreement between the received payload, its declared digest and an independently supplied expected digest before promotion. The input cannot select its own requirement or derive its expected context.
 
 ## Security and Repository Controls
 
@@ -192,6 +203,17 @@ Run complete verification:
 ~~~bash
 pnpm complete:verify
 ~~~
+
+Generate and validate an unsigned worktree-local integrity manifest:
+
+~~~bash
+pnpm release:manifest
+pnpm release:integrity
+~~~
+
+This transient manifest records `baseCommitSha`, detects post-generation artifact changes using SHA-256 and is ignored by Git. It does not claim to identify the future commit that would contain it, and it is not a release attestation, cryptographic signature, Sigstore provenance or proof of an external build environment.
+
+`WORKFLOW_POLICY_PARSER_SCOPE=LIMITED`: the workflow gate uses indentation-aware lexical checks for the documented unsafe patterns. It is not a complete semantic YAML parser.
 
 Run final portfolio verification:
 
@@ -285,3 +307,13 @@ Low      - Minor improvement or documentation gap.
 This repository is an engineering project and assessment lab, not a legal opinion, accredited audit tool, certification service or production compliance platform.
 
 Its findings are only as reliable as the modeled requirements and evidence supplied to the analysis engine. Real-world compliance and assurance decisions require authoritative source review, current organizational evidence and qualified security, legal and compliance judgment.
+
+## What this project does NOT claim
+
+- It does not prove that external application, identity, cloud or logging controls operate effectively.
+- It does not infer a production deployment, customers, cloud account or operational telemetry from documentation.
+- It does not claim formal compliance, certification or independent audit assurance.
+- It does not treat examples, templates, fixtures, placeholders or provider keywords as primary evidence.
+- `AUD-002` and `AUD-005` remain `UNVERIFIED` until primary, product-bound runtime evidence is collected and validated.
+
+The repository demonstrates an assessment method and its automated safeguards. Absence of evidence is reported as an assurance limitation, not automatically as proof that a control is absent or vulnerable.

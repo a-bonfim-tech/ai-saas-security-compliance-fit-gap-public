@@ -1,7 +1,10 @@
 import fs from "fs";
 import path from "path";
+import { fileURLToPath } from "node:url";
 import { execFileSync } from "child_process";
 import { escapeMarkdownTableCell } from "./markdown-table";
+import { RELEASE_ARTIFACTS, verifyReleaseManifest, type ReleaseManifest } from "./release-integrity";
+import { isPromotableEvidence, type EvidenceLike, type ExpectedCollectionContext } from "./evidence-validation";
 
 type AuditCheck = {
   category: string;
@@ -237,6 +240,73 @@ function checkNoPrivateProvenance(): AuditCheck {
   };
 }
 
+type EvidenceClaim = { status: string; foundEvidence: string[] };
+
+export function evaluateEvidenceInvariants(
+  evidence: Array<EvidenceLike & { key: string }>,
+  claims: EvidenceClaim[],
+  expectedContexts: Readonly<Record<string, ExpectedCollectionContext>> = {}
+): AuditCheck {
+  const supportingKeys = new Set(claims.flatMap(claim => claim.foundEvidence));
+  const unsupported = evidence.filter(item => supportingKeys.has(item.key) && !isPromotableEvidence(item, {
+    expectedContext: expectedContexts[item.key]
+  }).valid);
+  const contradictoryClaims = claims.filter(claim => claim.status === "Evidence Sufficient" && claim.foundEvidence.length === 0);
+  const passed = unsupported.length === 0 && contradictoryClaims.length === 0;
+  return {
+    category: "Evidence",
+    check: "Presence, promotion and control-support separation",
+    passed,
+    details: passed
+      ? "Persisted non-promotable evidence does not support controls, and sufficient claims have supporting evidence."
+      : `Unsupported evidence: ${unsupported.map(item => item.key).join(", ") || "none"}; contradictory sufficient claims: ${contradictoryClaims.length}`
+  };
+}
+
+function checkEvidenceInvariants(): AuditCheck {
+  const evidence = readJson<Array<EvidenceLike & { key: string }>>("evidence/evidence-register.json");
+  const report = readJson<{ findings: EvidenceClaim[] }>("reports/json/fit-gap-analysis.json");
+  return evaluateEvidenceInvariants(evidence, report.findings);
+}
+
+function checkReleaseIntegrity(): AuditCheck {
+  if (!exists("reports/release/release-manifest.json")) {
+    return {
+      category: "Release",
+      check: "Worktree-local artifact integrity",
+      passed: true,
+      details: "Transient worktree manifest is not present. Generate it locally before requesting an integrity comparison; absence makes no release-provenance claim."
+    };
+  }
+  try {
+    const manifest = readJson<ReleaseManifest>("reports/release/release-manifest.json");
+    const errors = verifyReleaseManifest(process.cwd(), manifest, RELEASE_ARTIFACTS);
+    return { category: "Release", check: "Worktree-local artifact integrity", passed: errors.length === 0, details: errors.length ? errors.join(", ") : "Unsigned worktree-local SHA-256 manifest is internally consistent with its base commit." };
+  } catch (error) {
+    return { category: "Release", check: "Release artifact integrity", passed: false, details: String(error) };
+  }
+}
+
+function checkSecurityPolicyGate(): AuditCheck {
+  const result = run(process.execPath, ["--import", "tsx", "scripts/security-policy-check.ts"]);
+  return {
+    category: "CI/CD",
+    check: "Workflow security policy",
+    passed: result !== null,
+    details: result === null ? "Workflow security policy failed." : "Immutable references, checkout safety, triggers and permissions passed."
+  };
+}
+
+function checkSecurityDocumentation(): AuditCheck {
+  const required = [
+    "docs/security/threat-model.md", "docs/standards/nist-ssdf-crosswalk.md",
+    "docs/quality/iso-25010-assessment.md", "docs/audit/control-traceability-matrix.md",
+    "docs/portfolio/cybersecurity-case-study.md", "docs/decisions/SDR-005-freshness-and-replay.md"
+  ];
+  const missing = required.filter(file => !exists(file));
+  return { category: "Documentation", check: "Security traceability links", passed: missing.length === 0, details: missing.length ? `Missing: ${missing.join(", ")}` : "Threat, standards, quality, traceability, case-study and decision artifacts exist." };
+}
+
 function generateMarkdown(checks: AuditCheck[]): string {
   const passed = checks.filter(check => check.passed).length;
   const failed = checks.length - passed;
@@ -285,6 +355,10 @@ function main(): void {
     checkControlCatalog(),
     checkEvidenceRegister(),
     checkPackageScripts(),
+    checkEvidenceInvariants(),
+    checkReleaseIntegrity(),
+    checkSecurityPolicyGate(),
+    checkSecurityDocumentation(),
     checkRemote(),
     checkNoPrivateProvenance()
   ];
@@ -314,4 +388,4 @@ function main(): void {
   console.log("Final project audit passed.");
 }
 
-main();
+if (path.resolve(process.argv[1] ?? "") === fileURLToPath(import.meta.url)) main();

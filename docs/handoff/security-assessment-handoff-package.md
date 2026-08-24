@@ -32,7 +32,7 @@ Framework -> Requirement -> Control -> Evidence -> Status -> Gap -> Risk -> Reco
 
 ## Current Fit-Gap Summary
 
-- Generated at: 2026-08-20T22:23:26.854Z
+- Generated at: 2026-08-23T09:23:15.937Z
 - Total controls assessed: 14
 - Evidence-sufficient controls: 1
 - Evidence-partial controls: 3

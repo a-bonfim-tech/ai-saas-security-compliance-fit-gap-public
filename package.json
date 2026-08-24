@@ -21,6 +21,16 @@
     "reports:all": "pnpm analyze && pnpm roadmap:generate && pnpm report:executive && pnpm report:risk-score && pnpm summary:portfolio",
     "evidence:refresh-complete": "pnpm collect:github-local && pnpm evidence:merge-local && pnpm evidence:ingest-domain && pnpm reports:all",
     "test": "vitest run",
+    "lint": "pnpm typecheck && pnpm security:policy",
+    "validate": "pnpm typecheck && pnpm test && pnpm validate:repo && pnpm security:policy",
+    "evidence:validate": "tsx scripts/validate-repository.ts",
+    "security:policy": "tsx scripts/security-policy-check.ts",
+    "security:scan": "pnpm security:policy && pnpm security:scan-local",
+    "audit:project": "pnpm audit:final",
+    "portfolio:build": "pnpm reports:all",
+    "release:manifest": "tsx scripts/generate-release-manifest.ts",
+    "release:integrity": "tsx scripts/verify-release-manifest.ts",
+    "performance:smoke": "tsx scripts/performance-smoke.ts",
     "validate:repo": "tsx scripts/validate-repository.ts",
     "quality:check": "pnpm typecheck && pnpm test && pnpm evidence:refresh-complete && pnpm validate:repo",
     "release:check": "tsx scripts/final-release-check.ts",
@@ -47,18 +57,20 @@
   ],
   "author": "a-bonfim-tech",
   "license": "ISC",
+  "packageManager": "pnpm@11.8.0",
   "devEngines": {
     "packageManager": {
       "name": "pnpm",
-      "version": "11.2.2",
+      "version": "11.8.0",
       "onFail": "download"
     }
   },
   "type": "module",
   "devDependencies": {
     "@types/node": "^25.9.1",
+    "ajv": "8.18.0",
     "tsx": "^4.22.3",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.7"
+    "vitest": "^4.1.11"
   }
 }

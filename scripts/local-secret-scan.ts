@@ -1,6 +1,8 @@
 import fs from "fs";
 import path from "path";
+import { fileURLToPath } from "node:url";
 import { escapeMarkdownTableCell } from "./markdown-table";
+import { detectAndMaskSecrets } from "./secret-patterns";
 
 type Finding = {
   file: string;
@@ -8,6 +10,18 @@ type Finding = {
   pattern: string;
   excerpt: string;
 };
+
+export type ScanCoverage = {
+  files_scanned: number;
+  files_skipped_symlink: number;
+  files_skipped_oversize: number;
+  files_skipped_binary: number;
+  files_skipped_unreadable: number;
+  files_skipped_other: number;
+};
+
+export type ScanResult = "CLEAN_COMPLETE" | "CLEAN_WITH_SKIPPED_FILES" | "FINDINGS_DETECTED" | "ERROR";
+type WalkResult = { files: string[]; coverage: ScanCoverage };
 
 const excludedDirectories = new Set([
   ".git",
@@ -22,36 +36,39 @@ const excludedFiles = new Set([
   "package-lock.json",
   "yarn.lock"
 ]);
+const maximumFileBytes = 5 * 1024 * 1024;
 
-const patterns: { name: string; regex: RegExp }[] = [
-  { name: "GitHub token", regex: /gh[pousr]_[A-Za-z0-9_]{20,}/g },
-  { name: "OpenAI API key", regex: /sk-[A-Za-z0-9]{20,}/g },
-  { name: "AWS access key", regex: /AKIA[0-9A-Z]{16}/g },
-  { name: "Private key block", regex: /-----BEGIN (RSA |EC |OPENSSH |DSA |)?PRIVATE KEY-----/g },
-  { name: "Generic password assignment", regex: /(password|passwd|pwd)\s*[:=]\s*["'][^"']{8,}["']/gi },
-  { name: "Generic secret assignment", regex: /(secret|token|api_key|apikey)\s*[:=]\s*["'][^"']{12,}["']/gi }
-];
+export function emptyCoverage(): ScanCoverage {
+  return { files_scanned: 0, files_skipped_symlink: 0, files_skipped_oversize: 0, files_skipped_binary: 0, files_skipped_unreadable: 0, files_skipped_other: 0 };
+}
 
-function walk(directory: string): string[] {
+export function walk(directory: string, root = process.cwd(), coverage = emptyCoverage()): WalkResult {
   const files: string[] = [];
 
-  for (const entry of fs.readdirSync(directory)) {
+  let entries: string[];
+  try { entries = fs.readdirSync(directory); } catch { coverage.files_skipped_unreadable++; return { files, coverage }; }
+  for (const entry of entries) {
     if (excludedDirectories.has(entry)) continue;
 
     const fullPath = path.join(directory, entry);
-    const stat = fs.statSync(fullPath);
+    let stat: fs.Stats;
+    try { stat = fs.lstatSync(fullPath); } catch { coverage.files_skipped_unreadable++; continue; }
+
+    if (stat.isSymbolicLink()) { coverage.files_skipped_symlink++; continue; }
 
     if (stat.isDirectory()) {
-      files.push(...walk(fullPath));
+      files.push(...walk(fullPath, root, coverage).files);
+    } else if (stat.isFile()) {
+      const relativePath = path.relative(root, fullPath);
+      if (excludedFiles.has(relativePath) || excludedFiles.has(entry)) continue;
+      if (stat.size > maximumFileBytes) { coverage.files_skipped_oversize++; continue; }
+      files.push(fullPath);
     } else {
-      const relativePath = path.relative(process.cwd(), fullPath);
-      if (!excludedFiles.has(relativePath) && !excludedFiles.has(entry)) {
-        files.push(fullPath);
-      }
+      coverage.files_skipped_other++;
     }
   }
 
-  return files;
+  return { files, coverage };
 }
 
 function isProbablyBinary(filePath: string): boolean {
@@ -60,34 +77,42 @@ function isProbablyBinary(filePath: string): boolean {
   return sample.includes(0);
 }
 
-function scanFile(filePath: string): Finding[] {
-  if (isProbablyBinary(filePath)) return [];
+function scanFile(filePath: string, coverage: ScanCoverage, root = process.cwd()): Finding[] {
+  try {
+    if (isProbablyBinary(filePath)) { coverage.files_skipped_binary++; return []; }
+  } catch { coverage.files_skipped_unreadable++; return []; }
 
-  const relativePath = path.relative(process.cwd(), filePath);
-  const content = fs.readFileSync(filePath, "utf8");
+  const relativePath = path.relative(root, filePath);
+  let content: string;
+  try { content = fs.readFileSync(filePath, "utf8"); } catch { coverage.files_skipped_unreadable++; return []; }
+  coverage.files_scanned++;
   const lines = content.split(/\r?\n/);
   const findings: Finding[] = [];
 
   for (let index = 0; index < lines.length; index++) {
     const line = lines[index];
 
-    for (const pattern of patterns) {
-      pattern.regex.lastIndex = 0;
-      if (pattern.regex.test(line)) {
-        findings.push({
-          file: relativePath,
-          line: index + 1,
-          pattern: pattern.name,
-          excerpt: line.length > 180 ? `${line.slice(0, 180)}...` : line
-        });
-      }
+    for (const detected of detectAndMaskSecrets(line)) {
+      findings.push({
+        file: relativePath,
+        line: index + 1,
+        pattern: detected.pattern,
+        excerpt: detected.excerpt
+      });
     }
   }
 
   return findings;
 }
 
-function generateMarkdown(findings: Finding[]): string {
+export function determineScanResult(findings: Finding[], coverage: ScanCoverage): ScanResult {
+  if (coverage.files_skipped_unreadable > 0 || coverage.files_skipped_other > 0) return "ERROR";
+  if (findings.length > 0) return "FINDINGS_DETECTED";
+  const skipped = coverage.files_skipped_symlink + coverage.files_skipped_oversize + coverage.files_skipped_binary;
+  return skipped > 0 ? "CLEAN_WITH_SKIPPED_FILES" : "CLEAN_COMPLETE";
+}
+
+export function generateMarkdown(findings: Finding[], coverage: ScanCoverage, result: ScanResult): string {
   const lines: string[] = [];
 
   lines.push("# Local Secret Scan Report");
@@ -97,14 +122,28 @@ function generateMarkdown(findings: Finding[]): string {
   lines.push("## Summary");
   lines.push("");
   lines.push(`- Findings: ${findings.length}`);
+  lines.push(`- SCAN_RESULT=${result}`);
+  for (const [key, value] of Object.entries(coverage)) lines.push(`- ${key}: ${value}`);
   lines.push("");
   lines.push("## Interpretation");
   lines.push("");
   lines.push("This is a lightweight local scan for common secret patterns. It is not a replacement for professional secret scanning tools such as GitHub Secret Scanning, Gitleaks or TruffleHog.");
   lines.push("");
 
-  if (findings.length === 0) {
+  if (result === "CLEAN_COMPLETE") {
     lines.push("No suspicious secret patterns were detected by this local scanner.");
+    lines.push("");
+    return lines.join("\n");
+  }
+
+  if (result === "CLEAN_WITH_SKIPPED_FILES") {
+    lines.push("No suspicious secret patterns were detected in scanned files. Coverage is partial because one or more files were skipped by explicit policy.");
+    lines.push("");
+    return lines.join("\n");
+  }
+
+  if (result === "ERROR") {
+    lines.push("The scan did not complete because one or more files could not be inspected safely.");
     lines.push("");
     return lines.join("\n");
   }
@@ -130,28 +169,36 @@ function generateMarkdown(findings: Finding[]): string {
   return lines.join("\n");
 }
 
+export function runSecretScan(root = process.cwd()): { findings: Finding[]; coverage: ScanCoverage; result: ScanResult } {
+  const { files, coverage } = walk(root, root);
+  const findings = files.flatMap(file => scanFile(file, coverage, root));
+  return { findings, coverage, result: determineScanResult(findings, coverage) };
+}
+
 function main(): void {
-  const files = walk(process.cwd());
-  const findings = files.flatMap(scanFile);
+  const { findings, coverage, result } = runSecretScan(process.cwd());
 
   fs.mkdirSync(path.join(process.cwd(), "reports/security"), { recursive: true });
   fs.mkdirSync(path.join(process.cwd(), "reports/json"), { recursive: true });
 
-  fs.writeFileSync("reports/security/local-secret-scan-report.md", generateMarkdown(findings));
+  fs.writeFileSync("reports/security/local-secret-scan-report.md", generateMarkdown(findings, coverage, result));
   fs.writeFileSync("reports/json/local-secret-scan-report.json", JSON.stringify({
     generatedAt: new Date().toISOString(),
+    scanResult: result,
+    coverage,
     findings
   }, null, 2));
 
   console.log("Local secret scan completed.");
   console.log(`Findings: ${findings.length}`);
+  console.log(`SCAN_RESULT=${result}`);
   console.log("Markdown: reports/security/local-secret-scan-report.md");
   console.log("JSON: reports/json/local-secret-scan-report.json");
 
-  if (findings.length > 0) {
+  if (result === "FINDINGS_DETECTED" || result === "ERROR") {
     console.error("Potential secret patterns found. Review the report before publishing.");
     process.exit(1);
   }
 }
 
-main();
+if (path.resolve(process.argv[1] ?? "") === fileURLToPath(import.meta.url)) main();

@@ -1,6 +1,6 @@
 # Fit-Gap Analysis Report
 
-Generated at: 2026-08-20T22:23:26.854Z
+Generated at: 2026-08-23T11:40:43.126Z
 
 ## Methodology
 
@@ -10,10 +10,10 @@ Framework -> Requirement -> Control -> Evidence -> Status -> Gap -> Risk -> Reco
 
 - Total controls assessed: 14
 - Evidence-sufficient controls: 1
-- Evidence-partial controls: 3
-- Evidence gaps: 10
-- High-risk findings: 7
-- Medium-risk findings: 6
+- Evidence-partial controls: 2
+- Evidence gaps: 11
+- High-risk findings: 8
+- Medium-risk findings: 5
 - Low-risk findings: 1
 
 ## Findings
@@ -21,9 +21,9 @@ Framework -> Requirement -> Control -> Evidence -> Status -> Gap -> Risk -> Reco
 | Control ID | Domain | Status | Risk | Recommendation |
 |---|---|---|---|---|
 | GOV-001 | Governance | Evidence Partial | Medium | Implement or document the following missing evidence: risk_management_process_defined. |
-| IAM-001 | Identity and Access Management | Evidence Partial | Medium | Implement or document the following missing evidence: rbac_defined, privileged_access_reviewed. |
-| SDLC-001 | Secure Software Development | Evidence Sufficient | Low | Periodically refresh and revalidate the supporting repository evidence. |
-| VULN-001 | Vulnerability Management | Evidence Partial | Medium | Implement or document the following missing evidence: dependency_review_enabled. |
+| IAM-001 | Identity and Access Management | Evidence Gap | High | Implement or document the following missing evidence: mfa_enabled, rbac_defined, privileged_access_reviewed. |
+| SDLC-001 | Secure Software Development | Evidence Partial | Medium | Implement or document the following missing evidence: pull_request_reviews_required. |
+| VULN-001 | Vulnerability Management | Evidence Sufficient | Low | Periodically refresh and revalidate the supporting repository evidence. |
 | LOG-001 | Logging and Monitoring | Evidence Gap | High | Implement or document the following missing evidence: application_logs_enabled, cloud_audit_logs_enabled, alerting_process_defined. |
 | PRIV-001 | Privacy and Data Protection | Evidence Gap | High | Implement or document the following missing evidence: data_inventory_exists, privacy_notice_exists, data_retention_defined. |
 | AI-001 | AI Governance | Evidence Gap | High | Implement or document the following missing evidence: ai_system_description_exists, ai_data_flow_documented, human_oversight_defined, prompt_injection_risk_assessed. |
@@ -55,17 +55,31 @@ Recommendation: Implement or document the following missing evidence: risk_manag
 
 Frameworks: NIST CSF 2.0, ISO 27001, SOC 2, GDPR
 
+Status: Evidence Gap
+
+Risk: High
+
+Found evidence: None
+
+Missing evidence: mfa_enabled, rbac_defined, privileged_access_reviewed
+
+Recommendation: Implement or document the following missing evidence: mfa_enabled, rbac_defined, privileged_access_reviewed.
+
+### SDLC-001 — Code changes are reviewed before being merged
+
+Frameworks: NIST CSF 2.0, ISO 27001, SOC 2, OWASP
+
 Status: Evidence Partial
 
 Risk: Medium
 
-Found evidence: mfa_enabled
+Found evidence: branch_protection_enabled, codeowners_configured
 
-Missing evidence: rbac_defined, privileged_access_reviewed
+Missing evidence: pull_request_reviews_required
 
-Recommendation: Implement or document the following missing evidence: rbac_defined, privileged_access_reviewed.
+Recommendation: Implement or document the following missing evidence: pull_request_reviews_required.
 
-### SDLC-001 — Code changes are reviewed before being merged
+### VULN-001 — Dependencies and code are scanned for vulnerabilities
 
 Frameworks: NIST CSF 2.0, ISO 27001, SOC 2, OWASP
 
@@ -73,25 +87,11 @@ Status: Evidence Sufficient
 
 Risk: Low
 
-Found evidence: branch_protection_enabled, pull_request_reviews_required, codeowners_configured
+Found evidence: dependabot_enabled, codeql_enabled, dependency_review_enabled
 
 Missing evidence: None
 
 Recommendation: Periodically refresh and revalidate the supporting repository evidence.
-
-### VULN-001 — Dependencies and code are scanned for vulnerabilities
-
-Frameworks: NIST CSF 2.0, ISO 27001, SOC 2, OWASP
-
-Status: Evidence Partial
-
-Risk: Medium
-
-Found evidence: dependabot_enabled, codeql_enabled
-
-Missing evidence: dependency_review_enabled
-
-Recommendation: Implement or document the following missing evidence: dependency_review_enabled.
 
 ### LOG-001 — Security-relevant events are logged and monitored
 

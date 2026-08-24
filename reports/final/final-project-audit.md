@@ -1,11 +1,11 @@
 # Final Project Audit Report
 
-Generated at: 2026-08-08T15:28:34.166Z
+Generated at: 2026-08-23T11:43:00.823Z
 
 ## Summary
 
-- Total checks: 9
-- Passed: 9
+- Total checks: 13
+- Passed: 13
 - Failed: 0
 
 ## Checks
@@ -14,11 +14,15 @@ Generated at: 2026-08-08T15:28:34.166Z
 |---|---|---|---|
 | Core | Required core files | PASS | All required core files exist. |
 | Reports | Generated reports | PASS | All expected reports exist. |
-| Documentation | Documentation coverage | PASS | Documentation files found: 69. |
+| Documentation | Documentation coverage | PASS | Documentation files found: 85. |
 | Frameworks | Framework notes | PASS | All framework notes exist. |
 | Controls | Control catalog coverage | PASS | Controls: 14. Domains: 9. Frameworks: 7. |
-| Evidence | Evidence register | PASS | Evidence items: 51. Present: 16. Missing/false: 35. |
+| Evidence | Evidence register | PASS | Evidence items: 51. Present: 20. Missing/false: 31. |
 | Automation | Package scripts | PASS | All required scripts exist. |
+| Evidence | Presence, promotion and control-support separation | PASS | Persisted non-promotable evidence does not support controls, and sufficient claims have supporting evidence. |
+| Release | Worktree-local artifact integrity | PASS | Transient worktree manifest is not present. Generate it locally before requesting an integrity comparison; absence makes no release-provenance claim. |
+| CI/CD | Workflow security policy | PASS | Immutable references, checkout safety, triggers and permissions passed. |
+| Documentation | Security traceability links | PASS | Threat, standards, quality, traceability, case-study and decision artifacts exist. |
 | GitHub | Public-edition origin remote | PASS | Origin remote: https://github.com/a-bonfim-tech/ai-saas-security-compliance-fit-gap-public.git |
 | Publication Safety | Private provenance markers | PASS | No private provenance markers found. |
 

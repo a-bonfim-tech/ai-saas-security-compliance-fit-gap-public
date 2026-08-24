@@ -1,6 +1,7 @@
 import { execFileSync } from "child_process";
 import fs from "fs";
 import path from "path";
+import { readSafeJson } from "./safe-file";
 
 type Provenance = {
   assessment_repository: string;
@@ -26,9 +27,7 @@ type RemoteEvidenceReport = {
 };
 
 function readJson<T>(relativePath: string): T {
-  return JSON.parse(
-    fs.readFileSync(path.join(process.cwd(), relativePath), "utf8")
-  ) as T;
+  return readSafeJson<T>(relativePath);
 }
 
 function writeJson(relativePath: string, data: unknown): void {

@@ -1,3 +1,5 @@
+![AI SaaS Security & Compliance Fit-Gap — evidence-driven fit-gap analysis with fail-closed validation](docs/assets/ai-saas-security-compliance-fit-gap-banner.svg)
+
 # AI SaaS Security & Compliance Fit-Gap Analysis
 
 A TypeScript-based security, compliance and AI governance engineering project for evidence-driven fit-gap assessment of AI-enabled B2B SaaS environments.

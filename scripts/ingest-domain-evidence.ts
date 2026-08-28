@@ -1,14 +1,9 @@
 import fs from "fs";
 import path from "path";
 import { readSafeJson } from "./safe-file";
+import { mergeEvidenceBatch, type EvidenceProvenance, type MergeableEvidence } from "./evidence-merge";
 
-type Evidence = {
-  key: string;
-  present: boolean;
-  source: string | null;
-  notes: string;
-  [field: string]: unknown;
-};
+type Evidence = MergeableEvidence;
 
 const SECURITY_RELEVANT_METADATA_FIELDS = [
   "status",
@@ -50,58 +45,6 @@ function fileExists(relativePath: string): boolean {
   return fs.existsSync(path.join(process.cwd(), relativePath));
 }
 
-function mergeEvidence(base: Evidence[], incoming: Evidence[]): Evidence[] {
-  const merged = new Map<string, Evidence>();
-
-  for (const item of base) {
-    merged.set(item.key, {
-      ...item,
-      notes: Array.from(new Set(item.notes.split(" | "))).join(" | ")
-    });
-  }
-
-  for (const item of incoming) {
-    const existing = merged.get(item.key);
-
-    if (!existing) {
-      merged.set(item.key, item);
-      continue;
-    }
-
-    const prefix = item.present
-      ? "Updated by domain evidence ingestion"
-      : "Domain evidence note";
-    const fragment = `${prefix}: ${item.notes}`;
-    const notes = existing.notes.split(" | ").includes(fragment)
-      ? existing.notes
-      : `${existing.notes} | ${fragment}`;
-
-    if (item.present) {
-      const discardedFields = SECURITY_RELEVANT_METADATA_FIELDS.filter(field =>
-        existing[field] !== undefined && item[field] === undefined
-      );
-
-      if (discardedFields.length > 0) {
-        throw new Error(
-          `Refusing to discard security metadata for ${item.key}: ${discardedFields.join(", ")}`
-        );
-      }
-    }
-
-    const selected = item.present ? item : existing;
-
-    merged.set(item.key, {
-      ...selected,
-      key: item.key,
-      present: item.present || existing.present,
-      source: item.present ? item.source : existing.source,
-      notes
-    });
-  }
-
-  return Array.from(merged.values()).sort((a, b) => a.key.localeCompare(b.key));
-}
-
 function main(): void {
   const basePath = "evidence/evidence-register.json";
 
@@ -123,7 +66,29 @@ function main(): void {
       throw new Error(`Invalid evidence file structure: ${file}`);
     }
 
-    evidenceRegister = mergeEvidence(evidenceRegister, domainFile.evidence);
+    if (domainFile.collectedAt === "YYYY-MM-DDTHH:MM:SSZ") {
+      continue;
+    }
+
+    const provenance: EvidenceProvenance = {
+      assessment_repository: "domain-evidence-register",
+      source_repository: domainFile.area,
+      source_collected_at: domainFile.collectedAt,
+      source_collector: "domain-evidence-ingestion"
+    };
+    const incoming = domainFile.evidence.map(item => {
+      const existing = evidenceRegister.find(record => record.key === item.key);
+      if (item.present && existing) {
+        const discardedFields = SECURITY_RELEVANT_METADATA_FIELDS.filter(field =>
+          existing[field] !== undefined && item[field] === undefined
+        );
+        if (discardedFields.length > 0) {
+          throw new Error(`Refusing to discard security metadata for ${item.key}: ${discardedFields.join(", ")}`);
+        }
+      }
+      return { ...item, provenance };
+    });
+    evidenceRegister = mergeEvidenceBatch(evidenceRegister, incoming);
     ingestedFiles.push(file);
   }
 

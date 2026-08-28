@@ -40,14 +40,21 @@ const richExternalEvidence = {
   verification_method: "read-only provider API"
 };
 
+const domainProvenance = {
+  assessment_repository: "domain-evidence-register",
+  source_repository: "Cloud Security",
+  source_collected_at: "2026-08-23T08:00:00Z",
+  source_collector: "domain-evidence-ingestion"
+};
+
 describe("domain evidence ingestion", () => {
   it("preserves every security-relevant field and remains idempotent", () => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), "domain-ingest-rich-"));
     writeJson(root, "evidence/evidence-register.json", [{
-      key: richExternalEvidence.key,
+      ...richExternalEvidence,
       present: false,
-      source: null,
-      notes: "canonical gap"
+      notes: "canonical gap",
+      provenance: domainProvenance
     }]);
     writeJson(root, "evidence/cloud/cloud-evidence-template.json", {
       area: "Cloud Security",
@@ -66,7 +73,7 @@ describe("domain evidence ingestion", () => {
       "collector_version", "environment", "collection_context", "collection_context_id", "target_fingerprint",
       "binding_digest", "verification_method"
     ]) expect(result[field], field).toEqual(richExternalEvidence[field as keyof typeof richExternalEvidence]);
-    expect(result.notes.match(/Updated by domain evidence ingestion/g)).toHaveLength(1);
+    expect(result.notes).toBe(richExternalEvidence.notes);
   });
 
   it("fails closed instead of replacing richer evidence with a poorer present record", () => {
@@ -88,7 +95,7 @@ describe("domain evidence ingestion", () => {
     expect(result.stderr).toContain("Refusing to discard security metadata");
   });
 
-  it("handles duplicate, documentary, and repository records without downgrading richer state", () => {
+  it("rejects ambiguous legacy state changes atomically", () => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), "domain-ingest-categories-"));
     writeJson(root, "evidence/evidence-register.json", [{
       key: "risk_management_process_defined",
@@ -124,18 +131,33 @@ describe("domain evidence ingestion", () => {
       }]
     });
 
-    expect(runIngest(root).status).toBe(0);
-    const result = JSON.parse(fs.readFileSync(
-      path.join(root, "evidence/evidence-register.json"), "utf8"
-    ));
-    const documentary = result.find((item: { key: string }) => item.key === "risk_management_process_defined");
-    const repository = result.find((item: { key: string }) => item.key === "security_policy_exists");
-    expect(documentary).toMatchObject({
+    const before = fs.readFileSync(path.join(root, "evidence/evidence-register.json"));
+    expect(runIngest(root).status).not.toBe(0);
+    expect(fs.readFileSync(path.join(root, "evidence/evidence-register.json")).equals(before)).toBe(true);
+  });
+
+  it("revokes a domain positive with a newer same-source negative", () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "domain-ingest-revoke-"));
+    writeJson(root, "evidence/evidence-register.json", [{
+      key: "cloud_audit_logs_enabled",
       present: true,
-      source: "docs/risk-management.md",
-      status: "documented",
-      verification_method: "document review"
+      source: "provider-api",
+      notes: "older positive",
+      provenance: domainProvenance
+    }]);
+    writeJson(root, "evidence/cloud/cloud-evidence-template.json", {
+      area: "Cloud Security",
+      collectedAt: "2026-08-24T08:00:00Z",
+      evidence: [{
+        key: "cloud_audit_logs_enabled",
+        present: false,
+        source: "provider-api",
+        notes: "newer negative"
+      }]
     });
-    expect(repository).toMatchObject({ present: true, source: "SECURITY.md" });
+    expect(runIngest(root).status).toBe(0);
+    const [result] = JSON.parse(fs.readFileSync(path.join(root, "evidence/evidence-register.json"), "utf8"));
+    expect(result.present).toBe(false);
+    expect(result.provenance.source_collected_at).toBe("2026-08-24T08:00:00Z");
   });
 });

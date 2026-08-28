@@ -6,6 +6,12 @@ import path from "node:path";
 import { analyzePnpmVersionParity, analyzeWorkflowText } from "../scripts/workflow-policy";
 
 const REQUIRED_CI_CHECK_NAME = "Validate TypeScript project";
+const tsxLoader = path.join(process.cwd(), "node_modules/tsx/dist/loader.mjs");
+const securityPolicyScript = path.join(process.cwd(), "scripts/security-policy-check.ts");
+
+function runIntegratedSecurityPolicy(cwd: string) {
+  return spawnSync(process.execPath, ["--import", tsxLoader, securityPolicyScript], { cwd, encoding: "utf8" });
+}
 
 function indentation(line: string): number {
   return line.match(/^\s*/)?.[0].length ?? 0;
@@ -601,7 +607,7 @@ ${jobBody}
     fs.writeFileSync(path.join(temporaryRoot, "package.json"), JSON.stringify({ packageManager: expected }));
     fs.writeFileSync(path.join(temporaryRoot, "pnpm-lock.yaml"), "lockfileVersion: '9.0'\n");
     fs.writeFileSync(path.join(temporaryRoot, ".github/workflows/test.yml"), `name: test\non: workflow_dispatch\njobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: \"owner/action@${"a".repeat(40)}\"\n      - uses: 'owner/action@${"b".repeat(40)}'\n      - uses: owner/action@${"c".repeat(40)}\n`);
-    const result = spawnSync(path.join(process.cwd(), "node_modules/.bin/tsx"), [path.join(process.cwd(), "scripts/security-policy-check.ts")], { cwd: temporaryRoot, encoding: "utf8" });
+    const result = runIntegratedSecurityPolicy(temporaryRoot);
     expect({ status: result.status, stdout: result.stdout, stderr: result.stderr }).toMatchObject({ status: 0 });
   });
 
@@ -611,7 +617,7 @@ ${jobBody}
     fs.writeFileSync(path.join(temporaryRoot, "package.json"), JSON.stringify({ packageManager: expected }));
     fs.writeFileSync(path.join(temporaryRoot, "pnpm-lock.yaml"), "lockfileVersion: '9.0'\n");
     fs.writeFileSync(path.join(temporaryRoot, ".github/workflows/test.yml"), "name: test\non: workflow_dispatch\njobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - \"r\\u0075n\": yarn global add pnpm@11.2.2\n");
-    const result = spawnSync(path.join(process.cwd(), "node_modules/.bin/tsx"), [path.join(process.cwd(), "scripts/security-policy-check.ts")], { cwd: temporaryRoot, encoding: "utf8" });
+    const result = runIntegratedSecurityPolicy(temporaryRoot);
     expect(result.status).not.toBe(0);
     expect(result.stdout).toContain("unsupported_escaped_executable_yaml_key");
   });

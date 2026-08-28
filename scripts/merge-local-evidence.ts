@@ -1,13 +1,10 @@
 import fs from "fs";
 import path from "path";
+import { execFileSync } from "node:child_process";
 import { readSafeJson } from "./safe-file";
+import { mergeEvidenceBatch, parseGitHubRepositoryIdentity, type EvidenceProvenance, type MergeableEvidence } from "./evidence-merge";
 
-type Evidence = {
-  key: string;
-  present: boolean;
-  source: string | null;
-  notes: string;
-};
+type Evidence = MergeableEvidence;
 
 type GithubLocalEvidenceReport = {
   repositoryPath: string;
@@ -24,39 +21,34 @@ function writeJson(relativePath: string, data: unknown): void {
   fs.writeFileSync(path.join(process.cwd(), relativePath), JSON.stringify(data, null, 2));
 }
 
-function mergeEvidence(base: Evidence[], incoming: Evidence[]): Evidence[] {
-  const merged = new Map<string, Evidence>();
-
-  for (const item of base) {
-    merged.set(item.key, item);
+function getCanonicalRepositoryIdentity(): string {
+  let remoteUrl: string;
+  try {
+    remoteUrl = execFileSync("git", ["remote", "get-url", "origin"], {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"]
+    }).trim();
+  } catch {
+    throw new Error("Unable to determine local evidence repository identity from git remote.origin.url.");
   }
-
-  for (const item of incoming) {
-    const existing = merged.get(item.key);
-
-    if (!existing) {
-      merged.set(item.key, item);
-      continue;
-    }
-
-    merged.set(item.key, {
-      key: item.key,
-      present: item.present || existing.present,
-      source: item.present ? item.source : existing.source,
-      notes: item.present
-        ? `${existing.notes} | Updated by local collector: ${item.notes}`
-        : existing.notes
-    });
-  }
-
-  return Array.from(merged.values()).sort((a, b) => a.key.localeCompare(b.key));
+  const repository = parseGitHubRepositoryIdentity(remoteUrl);
+  if (!repository) throw new Error(`Unable to parse canonical GitHub repository identity from origin: ${remoteUrl}`);
+  return repository;
 }
 
 function main(): void {
   const base = readJson<Evidence[]>("evidence/evidence-register.json");
   const localReport = readJson<GithubLocalEvidenceReport>("evidence/github/github-local-evidence.json");
+  const repositoryIdentity = getCanonicalRepositoryIdentity();
 
-  const merged = mergeEvidence(base, localReport.evidence);
+  const provenance: EvidenceProvenance = {
+    assessment_repository: repositoryIdentity,
+    source_repository: repositoryIdentity,
+    source_collected_at: localReport.collectedAt,
+    source_collector: localReport.collector
+  };
+  const incoming = localReport.evidence.map(item => ({ ...item, provenance }));
+  const merged = mergeEvidenceBatch(base, incoming);
 
   writeJson("evidence/evidence-register.json", merged);
 

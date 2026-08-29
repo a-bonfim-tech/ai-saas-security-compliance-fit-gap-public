@@ -72,6 +72,23 @@ function normalizeSource(value: string | null): string {
   return value === null ? "<null>" : value.trim().replace(/\s+/g, " ").replace(/\/+$/g, "").toLowerCase();
 }
 
+function authorityControlIdentity(item: MergeableEvidence): string {
+  const source = normalizeSource(item.source).replace(/^gh api /, "");
+  const repository = item.provenance!.source_repository.trim().toLowerCase();
+  const branchGovernanceKeys = new Set([
+    "branch_protection_enabled",
+    "pull_request_reviews_required",
+    "status_checks_required"
+  ]);
+  const isEquivalentGitHubGovernancePath =
+    source === `repos/${repository}/rulesets` ||
+    new RegExp(`^repos/${repository.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}/branches/[^/]+/protection$`).test(source);
+  if (branchGovernanceKeys.has(item.key) && isEquivalentGitHubGovernancePath) {
+    return "github-branch-governance";
+  }
+  return source;
+}
+
 function stable(value: unknown): string {
   if (Array.isArray(value)) return `[${value.map(stable).join(",")}]`;
   if (value && typeof value === "object") {
@@ -114,10 +131,9 @@ export function sourceIdentity(item: MergeableEvidence): string {
     : {};
   return stable({
     key: item.key,
-    collector: provenance.source_collector.trim().toLowerCase(),
     assessmentRepository: provenance.assessment_repository.trim().toLowerCase(),
     sourceRepository: provenance.source_repository.trim().toLowerCase(),
-    source: normalizeSource(item.source),
+    authorityControl: authorityControlIdentity(item),
     provider: typeof target.provider === "string" ? target.provider.trim().toLowerCase() : null,
     environment: typeof item.environment === "string" ? item.environment.trim().toLowerCase() : null,
     context: item.collection_context_id ?? item.collection_context ?? null

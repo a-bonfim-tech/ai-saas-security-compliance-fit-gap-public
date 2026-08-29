@@ -40,6 +40,61 @@ function run(root: string) {
   return spawnSync(process.execPath, ["--import", loader, script], { cwd: root, encoding: "utf8" });
 }
 
+function collectWithUnavailableGitHubApis(root: string, simulation = "unavailable") {
+  const bin = path.join(root, "bin");
+  fs.mkdirSync(bin, { recursive: true });
+  const gh = path.join(bin, "gh");
+  fs.writeFileSync(gh, `#!/usr/bin/env node
+const args = process.argv.slice(2);
+const simulation = process.env.GITHUB_API_SIMULATION;
+if (args[0] === "repo" && args[1] === "view" && args.includes("--jq")) {
+  process.stdout.write(${JSON.stringify(sourceRepository)} + "\\n");
+  process.exit(0);
+}
+if (args[0] === "repo" && args[1] === "view") {
+  process.stdout.write(JSON.stringify({
+    nameWithOwner: ${JSON.stringify(sourceRepository)}, visibility: "PUBLIC",
+    isPrivate: false, defaultBranchRef: { name: "main" }
+  }));
+  process.exit(0);
+}
+const endpoint = args.at(-1) || "";
+if (simulation === "ruleset-detail-failure") {
+  if (args.includes("--include") && endpoint.includes("/branches/main/protection")) {
+    process.stdout.write("HTTP/2 404 Not Found\\n");
+    process.exit(0);
+  }
+  if (endpoint.endsWith("/rulesets?includes_parents=true")) {
+    process.stdout.write(JSON.stringify([{ id: 1, target: "branch", enforcement: "active" }]));
+    process.exit(0);
+  }
+}
+if (simulation === "classic-payload-failure") {
+  if (args.includes("--include") && endpoint.includes("/branches/main/protection")) {
+    process.stdout.write("HTTP/2 200 OK\\n");
+    process.exit(0);
+  }
+  if (endpoint.endsWith("/rulesets?includes_parents=true")) {
+    process.stdout.write("[]");
+    process.exit(0);
+  }
+}
+process.stderr.write("simulated unavailable GitHub API");
+process.exit(1);
+`);
+  fs.chmodSync(gh, 0o755);
+  const collector = path.join(projectRoot, "scripts/collect-github-remote-evidence.ts");
+  return spawnSync(process.execPath, ["--import", loader, collector], {
+    cwd: root,
+    encoding: "utf8",
+    env: {
+      ...process.env,
+      GITHUB_API_SIMULATION: simulation,
+      PATH: `${bin}${path.delimiter}${process.env.PATH ?? ""}`
+    }
+  });
+}
+
 describe("remote authoritative evidence merge", () => {
   it("revokes a stale positive and selects current provenance", () => {
     const root = fixture([{ key: "branch_protection_enabled", present: false, source, notes: "newer negative" }]);
@@ -52,6 +107,45 @@ describe("remote authoritative evidence merge", () => {
     });
   });
 
+  it("does not turn an unavailable collection into an authoritative revocation", () => {
+    const root = fixture([]);
+    expect(collectWithUnavailableGitHubApis(root).status).toBe(0);
+    const report = JSON.parse(fs.readFileSync(path.join(root, "evidence/github/github-remote-evidence.json"), "utf8"));
+    expect(report.evidence.find((item: { key: string }) => item.key === "branch_protection_enabled")).toBeUndefined();
+    expect(run(root).status).toBe(0);
+    const item = JSON.parse(fs.readFileSync(path.join(root, "evidence/evidence-register.json"), "utf8"))
+      .find((candidate: { key: string }) => candidate.key === "branch_protection_enabled");
+    expect(item.present).toBe(true);
+  });
+
+  it("does not fabricate negative evidence when unavailable collection has no prior state", () => {
+    const root = fixture([]);
+    writeJson(root, "evidence/evidence-register.json", []);
+    expect(collectWithUnavailableGitHubApis(root).status).toBe(0);
+    expect(run(root).status).toBe(0);
+    const register = JSON.parse(fs.readFileSync(path.join(root, "evidence/evidence-register.json"), "utf8"));
+    expect(register.some((item: { present: boolean }) => item.present === false)).toBe(false);
+  });
+
+  it("does not fabricate branch-governance negatives when active ruleset details are unavailable", () => {
+    const root = fixture([]);
+    expect(collectWithUnavailableGitHubApis(root, "ruleset-detail-failure").status).toBe(0);
+    const report = JSON.parse(fs.readFileSync(path.join(root, "evidence/github/github-remote-evidence.json"), "utf8"));
+    for (const key of ["branch_protection_enabled", "pull_request_reviews_required", "status_checks_required"]) {
+      expect(report.evidence.find((item: { key: string }) => item.key === key)).toBeUndefined();
+    }
+  });
+
+  it("does not fabricate review or status-check negatives when classic protection payload is unavailable", () => {
+    const root = fixture([]);
+    expect(collectWithUnavailableGitHubApis(root, "classic-payload-failure").status).toBe(0);
+    const report = JSON.parse(fs.readFileSync(path.join(root, "evidence/github/github-remote-evidence.json"), "utf8"));
+    expect(report.evidence.find((item: { key: string }) => item.key === "branch_protection_enabled")?.present).toBe(true);
+    for (const key of ["pull_request_reviews_required", "status_checks_required"]) {
+      expect(report.evidence.find((item: { key: string }) => item.key === key)).toBeUndefined();
+    }
+  });
+
   it("is byte-idempotent for an identical remote observation", () => {
     const root = fixture([{ key: "branch_protection_enabled", present: false, source, notes: "newer negative" }]);
     expect(run(root).status).toBe(0);
@@ -61,9 +155,12 @@ describe("remote authoritative evidence merge", () => {
     expect(createHash("sha256").update(second).digest("hex")).toBe(createHash("sha256").update(first).digest("hex"));
   });
 
-  it("rejects a conflicting source without writing", () => {
-    const root = fixture([{ key: "branch_protection_enabled", present: false, source: "gh api repos/other/source", notes: "ambiguous" }]);
+  it("rejects a conflicting repository authority without writing", () => {
+    const root = fixture([{ key: "branch_protection_enabled", present: false, source, notes: "ambiguous" }]);
     const register = path.join(root, "evidence/evidence-register.json");
+    const [existing] = JSON.parse(fs.readFileSync(register, "utf8"));
+    existing.provenance.source_repository = "a-bonfim-tech/other";
+    fs.writeFileSync(register, JSON.stringify([existing], null, 2));
     const before = fs.readFileSync(register);
     expect(run(root).status).not.toBe(0);
     expect(fs.readFileSync(register).equals(before)).toBe(true);

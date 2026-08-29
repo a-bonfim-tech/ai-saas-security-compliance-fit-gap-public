@@ -3,7 +3,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { mergeEvidenceBatch, transitionEvidence, type MergeableEvidence } from "../scripts/evidence-merge";
+import { mergeEvidenceBatch, sourceIdentity, transitionEvidence, type MergeableEvidence } from "../scripts/evidence-merge";
 import { assessControl, type Control, type Evidence } from "../scripts/analysis-core";
 import { buildEvidencePayloadDigest, buildTargetBindingDigest } from "../scripts/evidence-validation";
 
@@ -44,10 +44,12 @@ describe("authoritative evidence transition", () => {
     expect(() => transitionEvidence(old, evidence(true, "2026-08-24T00:00:00Z", { notes: "different" }))).toThrow(/same timestamp/);
   });
 
-  it("rejects conflicting sources, including differently normalized sources", () => {
+  it("rejects different repository authorities and unrelated acquisition paths", () => {
     const old = evidence(true, "2026-08-23T00:00:00Z");
-    expect(() => transitionEvidence(old, evidence(false, "2026-08-24T00:00:00Z", { source: "other/source" }))).toThrow(/Conflicting authoritative sources/);
-    expect(transitionEvidence(old, evidence(false, "2026-08-24T00:00:00Z", { source: "  COLLECTOR/SOURCE/  " })).present).toBe(false);
+    expect(() => transitionEvidence(old, evidence(false, "2026-08-24T00:00:00Z", {
+      provenance: { ...old.provenance!, source_repository: "a-bonfim-tech/other", source_collected_at: "2026-08-24T00:00:00Z" }
+    }))).toThrow(/Conflicting authoritative sources/);
+    expect(() => transitionEvidence(old, evidence(false, "2026-08-24T00:00:00Z", { source: "other/acquisition/path" }))).toThrow(/Conflicting authoritative sources/);
   });
 
   it.each([undefined, "not-a-timestamp"])("rejects missing or invalid timestamp: %s", source_collected_at => {
@@ -105,6 +107,18 @@ describe("authoritative evidence transition", () => {
   it("preserves provenance from the selected current observation", () => {
     const selected = transitionEvidence(evidence(true, "2026-08-23T00:00:00Z"), evidence(false, "2026-08-24T00:00:00Z"));
     expect(selected.provenance?.source_collected_at).toBe("2026-08-24T00:00:00Z");
+  });
+
+  it.each([
+    ["classic to ruleset", "gh api repos/a-bonfim-tech/source/branches/main/protection", "gh api repos/a-bonfim-tech/source/rulesets"],
+    ["ruleset to classic", "gh api repos/a-bonfim-tech/source/rulesets", "gh api repos/a-bonfim-tech/source/branches/main/protection"]
+  ])("keeps authority identity stable from %s while preserving acquisition provenance", (_direction, oldSource, newSource) => {
+    const existing = evidence(true, "2026-08-23T00:00:00Z", { key: "branch_protection_enabled", source: oldSource });
+    const incoming = evidence(false, "2026-08-24T00:00:00Z", { key: "branch_protection_enabled", source: newSource });
+    expect(sourceIdentity(existing)).toBe(sourceIdentity(incoming));
+    const selected = transitionEvidence(existing, incoming);
+    expect(selected.present).toBe(false);
+    expect(selected.source).toBe(newSource);
   });
 
   it.each([

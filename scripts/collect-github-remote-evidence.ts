@@ -105,14 +105,14 @@ function collectRemoteEvidence(repository: string): RemoteEvidenceReport {
     warnings.push("Repository metadata could not be collected.");
   }
 
-  evidence.push({
-    key: "repository_visibility_reviewed",
-    present: Boolean(repoInfo?.visibility),
-    source: "gh repo view --json visibility,isPrivate",
-    notes: repoInfo
-      ? `Repository visibility detected as ${repoInfo.visibility}. Private: ${repoInfo.isPrivate}.`
-      : "Repository visibility could not be determined."
-  });
+  if (repoInfo?.visibility) {
+    evidence.push({
+      key: "repository_visibility_reviewed",
+      present: true,
+      source: "gh repo view --json visibility,isPrivate",
+      notes: `Repository visibility detected as ${repoInfo.visibility}. Private: ${repoInfo.isPrivate}.`
+    });
+  }
 
   const branchProtectionEndpoint =
     `repos/${repository}/branches/${defaultBranch}/protection`;
@@ -126,16 +126,16 @@ function collectRemoteEvidence(repository: string): RemoteEvidenceReport {
   const rulesetSummaries =
     ghApiJson<any[]>(
       `repos/${repository}/rulesets?includes_parents=true`
-    ) ?? [];
+    );
 
   const activeBranchRulesets =
-    rulesetSummaries.filter(
+    (rulesetSummaries ?? []).filter(
       ruleset =>
         ruleset?.target === "branch" &&
         ruleset?.enforcement === "active"
     );
 
-  const activeMainRulesets = activeBranchRulesets
+  const activeBranchRulesetDetails = activeBranchRulesets
     .map(ruleset =>
       ghApiJson<any>(
         `repos/${repository}/rulesets/${ruleset.id}`
@@ -143,7 +143,12 @@ function collectRemoteEvidence(repository: string): RemoteEvidenceReport {
     )
     .filter((ruleset): ruleset is any =>
       Boolean(ruleset)
-    )
+    );
+
+  const rulesetDetailsComplete =
+    activeBranchRulesetDetails.length === activeBranchRulesets.length;
+
+  const activeMainRulesets = activeBranchRulesetDetails
     .filter(ruleset => {
       const include =
         ruleset?.conditions?.ref_name?.include;
@@ -207,18 +212,36 @@ function collectRemoteEvidence(repository: string): RemoteEvidenceReport {
     branchProtectionStatus === 200 ||
     activeMainRulesetPresent;
 
-  evidence.push({
-    key: "branch_protection_enabled",
-    present: branchGovernanceConfirmed,
-    source: activeMainRulesetPresent
-      ? `gh api repos/${repository}/rulesets`
-      : branchProtectionEndpoint,
-    notes: branchProtectionStatus === 200
-      ? `Classic branch protection is enabled for ${defaultBranch}.`
-      : activeMainRulesetPresent
-        ? `An active GitHub ruleset targets ${defaultBranch}. Classic branch protection remains unconfirmed.`
-        : `Neither classic branch protection nor an active ruleset targeting ${defaultBranch} could be confirmed.`
-  });
+  const branchGovernancePresenceComplete =
+    branchProtectionStatus === 200 ||
+    (
+      branchProtectionStatus === 404 &&
+      rulesetSummaries !== null &&
+      rulesetDetailsComplete
+    );
+
+  const branchGovernanceRulesComplete =
+    rulesetSummaries !== null &&
+    rulesetDetailsComplete &&
+    (
+      branchProtectionStatus === 404 ||
+      (branchProtectionStatus === 200 && branchProtection !== null)
+    );
+
+  if (branchGovernanceConfirmed || branchGovernancePresenceComplete) {
+    evidence.push({
+      key: "branch_protection_enabled",
+      present: branchGovernanceConfirmed,
+      source: activeMainRulesetPresent
+        ? `gh api repos/${repository}/rulesets`
+        : branchProtectionEndpoint,
+      notes: branchProtectionStatus === 200
+        ? `Classic branch protection is enabled for ${defaultBranch}.`
+        : activeMainRulesetPresent
+          ? `An active GitHub ruleset targets ${defaultBranch}. Classic branch protection remains unconfirmed.`
+          : `Neither classic branch protection nor an active ruleset targeting ${defaultBranch} is configured.`
+    });
+  }
 
   const classicPullRequestReviewsRequired =
     Boolean(
@@ -230,18 +253,18 @@ function collectRemoteEvidence(repository: string): RemoteEvidenceReport {
     classicPullRequestReviewsRequired ||
     rulesetApprovalRequired;
 
-  evidence.push({
-    key: "pull_request_reviews_required",
-    present: pullRequestReviewsRequired,
-    source: activeMainRulesetPresent
-      ? `gh api repos/${repository}/rulesets`
-      : branchProtectionEndpoint,
-    notes: pullRequestReviewsRequired
-      ? "At least one confirmed branch-governance mechanism requires approving pull request reviews."
-      : activeMainRulesetPresent
-        ? "An active ruleset targets the default branch, but it does not require an approving review."
-        : "Required approving pull request reviews could not be confirmed."
-  });
+  if (pullRequestReviewsRequired || branchGovernanceRulesComplete) {
+    evidence.push({
+      key: "pull_request_reviews_required",
+      present: pullRequestReviewsRequired,
+      source: activeMainRulesetPresent
+        ? `gh api repos/${repository}/rulesets`
+        : branchProtectionEndpoint,
+      notes: pullRequestReviewsRequired
+        ? "At least one confirmed branch-governance mechanism requires approving pull request reviews."
+        : "The confirmed branch-governance configuration does not require an approving pull request review."
+    });
+  }
 
   const classicStatusChecksRequired =
     Boolean(
@@ -252,27 +275,29 @@ function collectRemoteEvidence(repository: string): RemoteEvidenceReport {
     classicStatusChecksRequired ||
     rulesetStatusChecksRequired;
 
-  evidence.push({
-    key: "status_checks_required",
-    present: statusChecksRequired,
-    source: activeMainRulesetPresent
-      ? `gh api repos/${repository}/rulesets`
-      : branchProtectionEndpoint,
-    notes: statusChecksRequired
-      ? "Required status checks are configured for the default branch."
-      : "Required status checks could not be confirmed for the default branch."
-  });
+  if (statusChecksRequired || branchGovernanceRulesComplete) {
+    evidence.push({
+      key: "status_checks_required",
+      present: statusChecksRequired,
+      source: activeMainRulesetPresent
+        ? `gh api repos/${repository}/rulesets`
+        : branchProtectionEndpoint,
+      notes: statusChecksRequired
+        ? "Required status checks are configured for the default branch."
+        : "The confirmed branch-governance configuration does not require status checks."
+    });
+  }
 
   const vulnerabilityAlertsStatus = ghApiStatus(`repos/${repository}/vulnerability-alerts`);
 
-  evidence.push({
-    key: "dependabot_alerts_enabled",
-    present: vulnerabilityAlertsStatus === 204,
-    source: `gh api repos/${repository}/vulnerability-alerts`,
-    notes: vulnerabilityAlertsStatus === 204
-      ? "Dependabot vulnerability alerts are enabled."
-      : "Dependabot vulnerability alerts could not be confirmed. This may require repository admin permissions."
-  });
+  if (vulnerabilityAlertsStatus === 204) {
+    evidence.push({
+      key: "dependabot_alerts_enabled",
+      present: true,
+      source: `gh api repos/${repository}/vulnerability-alerts`,
+      notes: "Dependabot vulnerability alerts are enabled."
+    });
+  }
 
   const securityAndAnalysis = ghApiJson<any>(`repos/${repository}`);
 
@@ -280,43 +305,43 @@ function collectRemoteEvidence(repository: string): RemoteEvidenceReport {
   const pushProtectionStatus = securityAndAnalysis?.security_and_analysis?.secret_scanning_push_protection?.status;
   const advancedSecurityStatus = securityAndAnalysis?.security_and_analysis?.advanced_security?.status;
 
-  evidence.push({
-    key: "secret_scanning_enabled",
-    present: secretScanningStatus === "enabled",
-    source: `gh api repos/${repository}`,
-    notes: secretScanningStatus
-      ? `Secret scanning status: ${secretScanningStatus}.`
-      : "Secret scanning status could not be determined."
-  });
+  if (secretScanningStatus === "enabled" || secretScanningStatus === "disabled") {
+    evidence.push({
+      key: "secret_scanning_enabled",
+      present: secretScanningStatus === "enabled",
+      source: `gh api repos/${repository}`,
+      notes: `Secret scanning status: ${secretScanningStatus}.`
+    });
+  }
 
-  evidence.push({
-    key: "push_protection_enabled",
-    present: pushProtectionStatus === "enabled",
-    source: `gh api repos/${repository}`,
-    notes: pushProtectionStatus
-      ? `Secret scanning push protection status: ${pushProtectionStatus}.`
-      : "Push protection status could not be determined."
-  });
+  if (pushProtectionStatus === "enabled" || pushProtectionStatus === "disabled") {
+    evidence.push({
+      key: "push_protection_enabled",
+      present: pushProtectionStatus === "enabled",
+      source: `gh api repos/${repository}`,
+      notes: `Secret scanning push protection status: ${pushProtectionStatus}.`
+    });
+  }
 
-  evidence.push({
-    key: "advanced_security_reviewed",
-    present: Boolean(advancedSecurityStatus),
-    source: `gh api repos/${repository}`,
-    notes: advancedSecurityStatus
-      ? `GitHub Advanced Security status: ${advancedSecurityStatus}.`
-      : "GitHub Advanced Security status could not be determined."
-  });
+  if (advancedSecurityStatus) {
+    evidence.push({
+      key: "advanced_security_reviewed",
+      present: true,
+      source: `gh api repos/${repository}`,
+      notes: `GitHub Advanced Security status: ${advancedSecurityStatus}.`
+    });
+  }
 
   const collaborators = ghApiJson<any[]>(`repos/${repository}/collaborators?per_page=100`);
 
-  evidence.push({
-    key: "collaborators_reviewed",
-    present: Array.isArray(collaborators),
-    source: `gh api repos/${repository}/collaborators`,
-    notes: Array.isArray(collaborators)
-      ? `Collaborator list was accessible. Collaborators found: ${collaborators.length}.`
-      : "Collaborator list could not be accessed. This may require repository admin permissions."
-  });
+  if (Array.isArray(collaborators)) {
+    evidence.push({
+      key: "collaborators_reviewed",
+      present: true,
+      source: `gh api repos/${repository}/collaborators`,
+      notes: `Collaborator list was accessible. Collaborators found: ${collaborators.length}.`
+    });
+  }
 
   if (!repoInfo) {
     warnings.push("Some repository-level evidence may be incomplete because repository metadata was unavailable.");

@@ -24,6 +24,14 @@ Structured evidence enters a validation boundary before control evaluation. The 
 
 The project generates Markdown, JSON and CSV outputs from a control catalog and evidence register. Automated tests cover analysis, escaping, provenance merge and adversarial external-target validation. Defined CI workflows perform type checks, tests, evidence refresh, repository validation, secret scanning and release checks; current remote execution remains separately evidenced.
 
+## CAND-001: Authoritative evidence revocation
+
+A historical confirmed-positive observation could previously remain effective after a newer authoritative confirmed-negative observation. This stale positive evidence could distort assessment outputs and downstream security or compliance decisions.
+
+The remediation introduced explicit temporal and state-transition semantics: a newer confirmed authoritative negative revokes an older confirmed positive. Unavailable or indeterminate acquisition is not treated as a confirmed negative and cannot fabricate revocation. Authority identity remains stable across equivalent GitHub branch-governance acquisition paths, while each acquisition path retains its own provenance. Ambiguous or foreign authority fails closed instead of changing trusted state.
+
+Two material P1 review findings were remediated before merge. Regression coverage exercised confirmed positive to confirmed negative; confirmed positive to unavailable or indeterminate; unavailable without prior state; classic protection to ruleset and ruleset to classic protection; foreign-authority separation; and fail-closed ambiguous-authority behavior. On the integrated main commit, 318 of 318 tests and all 7 required post-merge checks passed, with CAND-001 remaining non-regressed. These results demonstrate the repository-level fix and verification cycle; they do not establish production control effectiveness, independent audit, or verification of `AUD-002` or `AUD-005`.
+
 ## Findings and limitations
 
 The repository demonstrates assessment engineering, not production control effectiveness. External GitHub settings can be unavailable due to permissions, and the lightweight local secret scanner is not equivalent to a full historical scan. Runtime IAM and logging remain unverified.

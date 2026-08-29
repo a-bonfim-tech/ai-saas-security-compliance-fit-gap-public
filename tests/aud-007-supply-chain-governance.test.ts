@@ -5,6 +5,7 @@ import {
   expect,
   it
 } from "vitest";
+import { mergeEvidenceBatch, type MergeableEvidence } from "../scripts/evidence-merge";
 
 const root = process.cwd();
 
@@ -116,25 +117,32 @@ describe(
       }
     );
 
-    it(
-      "permits fresh remote governance state to replace legacy repository-settings positives",
-      () => {
-        const merge = read(
-          "scripts/merge-remote-evidence.ts"
-        );
+    it("rejects provenance-less or foreign authority state changes without mutation", () => {
+      const provenance = {
+        assessment_repository: "a-bonfim-tech/assessment",
+        source_repository: "a-bonfim-tech/source-a",
+        source_collected_at: "2026-08-23T00:00:00Z",
+        source_collector: "github-remote-evidence-collector"
+      };
+      const base: MergeableEvidence[] = [{
+        key: "pull_request_reviews_required", present: true,
+        source: "github/repository-settings", notes: "legacy positive"
+      }];
+      const before = JSON.stringify(base);
+      expect(() => mergeEvidenceBatch(base, [{
+        key: "pull_request_reviews_required", present: false,
+        source: "github/repository-settings", notes: "new negative", provenance
+      }])).toThrow(/lacks existing provenance/);
+      expect(JSON.stringify(base)).toBe(before);
 
-        expect(merge).toContain(
-          "existingIsLegacyRepositorySettingsEvidence"
-        );
-
-        expect(merge).toContain(
-          'existing.source === "github/repository-settings"'
-        );
-
-        expect(merge).toContain(
-          "freshRemoteStateIsAuthoritative"
-        );
-      }
-    );
+      const foreignBase: MergeableEvidence[] = [{ ...base[0], provenance }];
+      const foreignBefore = JSON.stringify(foreignBase);
+      expect(() => mergeEvidenceBatch(foreignBase, [{
+        key: "pull_request_reviews_required", present: false,
+        source: "github/repository-settings", notes: "foreign negative",
+        provenance: { ...provenance, source_repository: "a-bonfim-tech/source-b", source_collected_at: "2026-08-24T00:00:00Z" }
+      }])).toThrow(/Conflicting authoritative sources/);
+      expect(JSON.stringify(foreignBase)).toBe(foreignBefore);
+    });
   }
 );

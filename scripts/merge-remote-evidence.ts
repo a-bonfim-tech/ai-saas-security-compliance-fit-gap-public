@@ -2,21 +2,10 @@ import { execFileSync } from "child_process";
 import fs from "fs";
 import path from "path";
 import { readSafeJson } from "./safe-file";
+import { mergeEvidenceBatch, type EvidenceProvenance, type MergeableEvidence } from "./evidence-merge";
 
-type Provenance = {
-  assessment_repository: string;
-  source_repository: string;
-  source_collected_at: string;
-  source_collector: string;
-};
-
-type Evidence = {
-  key: string;
-  present: boolean;
-  source: string | null;
-  notes: string;
-  provenance?: Provenance;
-};
+type Provenance = EvidenceProvenance;
+type Evidence = MergeableEvidence;
 
 type RemoteEvidenceReport = {
   repository: string;
@@ -114,103 +103,14 @@ function buildRemoteProvenance(
   };
 }
 
-function appendRemoteNoteOnce(
-  existingNotes: string,
-  prefix: "Updated by remote collector" | "Remote collector note",
-  incomingNotes: string
-): string {
-  const fragment = `${prefix}: ${incomingNotes}`;
-
-  const existingFragments = existingNotes.split(" | ");
-
-  if (
-    existingFragments.includes(incomingNotes) ||
-    existingFragments.includes(fragment)
-  ) {
-    return existingNotes;
-  }
-
-  return `${existingNotes} | ${fragment}`;
-}
-
 function mergeEvidence(
   base: Evidence[],
   incoming: Evidence[],
   remoteProvenance: Provenance
 ): Evidence[] {
-  const merged = new Map<string, Evidence>();
-
-  for (const item of base) {
-    merged.set(item.key, item);
-  }
-
-  for (const item of incoming) {
-    const existing = merged.get(item.key);
-
-    if (!existing) {
-      merged.set(item.key, {
-        ...item,
-        provenance: remoteProvenance
-      });
-      continue;
-    }
-
-    const remoteSourceMatchesExisting =
-      item.source !== null &&
-      existing.source === item.source;
-
-    const existingIsForeignRemoteEvidence =
-      existing.provenance?.source_collector ===
-        remoteProvenance.source_collector &&
-      existing.provenance?.assessment_repository ===
-        remoteProvenance.assessment_repository &&
-      existing.provenance?.source_repository !==
-        remoteProvenance.source_repository;
-
-    const existingIsLegacyRepositorySettingsEvidence =
-      existing.source === "github/repository-settings" &&
-      existing.provenance === undefined;
-
-    const remoteSourceBecomesAuthoritative =
-      item.present ||
-      remoteSourceMatchesExisting ||
-      existingIsForeignRemoteEvidence ||
-      existingIsLegacyRepositorySettingsEvidence;
-
-    const freshRemoteStateIsAuthoritative =
-      existingIsForeignRemoteEvidence ||
-      existingIsLegacyRepositorySettingsEvidence;
-
-    merged.set(item.key, {
-      ...existing,
-      key: item.key,
-      present: freshRemoteStateIsAuthoritative
-        ? item.present
-        : item.present || existing.present,
-      source:
-        item.present ||
-        freshRemoteStateIsAuthoritative
-          ? item.source
-          : existing.source,
-      notes: item.present
-        ? appendRemoteNoteOnce(
-            existing.notes,
-            "Updated by remote collector",
-            item.notes
-          )
-        : appendRemoteNoteOnce(
-            existing.notes,
-            "Remote collector note",
-            item.notes
-          ),
-      provenance: remoteSourceBecomesAuthoritative
-        ? remoteProvenance
-        : existing.provenance
-    });
-  }
-
-  return Array.from(merged.values()).sort(
-    (a, b) => a.key.localeCompare(b.key)
+  return mergeEvidenceBatch(
+    base,
+    incoming.map(item => ({ ...item, provenance: remoteProvenance }))
   );
 }
 
